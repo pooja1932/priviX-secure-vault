@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>priviX - Secure Vault</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script>
+        // Apply theme immediately to prevent flash
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+
+    <style>
+        :root {
+            /* LIGHT MODE (Default fallback, but we default to dark below) */
+            --primary-gradient: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            --secondary-gradient: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            --bg-color: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-highlight: #0284c7;
+            --accent-glow: 0 10px 20px rgba(14, 165, 233, 0.15);
+            --table-hover: rgba(0, 0, 0, 0.02);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-focus-bg: #fff;
+            --nav-bg: rgba(255, 255, 255, 0.8);
+            --icon-bg-primary: rgba(14, 165, 233, 0.1);
+            --icon-bg-success: rgba(34, 197, 94, 0.1);
+            --icon-bg-warning: rgba(245, 158, 11, 0.1);
+            --btn-text: #ffffff;
+            --orb-opacity: 0.5;
+            --bg-img-opacity: 0.6;
+        }
+
+        [data-theme="dark"] {
+            /* DARK MODE */
+            --primary-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            --secondary-gradient: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            --bg-color: #0b0f19;
+            --card-bg: rgba(20, 26, 43, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-highlight: #38bdf8;
+            --accent-glow: 0 0 20px rgba(0, 242, 254, 0.3);
+            --table-hover: rgba(255, 255, 255, 0.03);
+            --input-bg: rgba(0, 0, 0, 0.2);
+            --input-focus-bg: rgba(0, 0, 0, 0.4);
+            --nav-bg: rgba(11, 15, 25, 0.7);
+            --icon-bg-primary: rgba(56, 189, 248, 0.15);
+            --icon-bg-success: rgba(16, 185, 129, 0.15);
+            --icon-bg-warning: rgba(245, 158, 11, 0.15);
+            --btn-text: #000000;
+            --orb-opacity: 0.15;
+            --bg-img-opacity: 0.3;
+        }
+
+        /* OVERRIDES for Bootstrap colors to fix contrast */
+        .text-muted { color: var(--text-muted) !important; }
+        .text-dark { color: var(--text-main) !important; }
+        .bg-white { background-color: transparent !important; }
+        .border-bottom { border-bottom-color: var(--card-border) !important; }
+        .border-top { border-top-color: var(--card-border) !important; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        p, h1, h2, h3, h4, h5, h6, span, div, label {
+            transition: color 0.4s ease;
+        }
+
+        /* Animated Background Orbs */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            animation: float 15s infinite ease-in-out alternate;
+            transition: opacity 0.4s ease, background-color 0.4s ease;
+        }
+        .orb-1 { width: 400px; height: 400px; background: rgba(56, 189, 248, var(--orb-opacity)); top: -100px; left: -100px; animation-delay: 0s; }
+        .orb-2 { width: 500px; height: 500px; background: rgba(168, 85, 247, var(--orb-opacity)); bottom: -150px; right: -100px; animation-delay: -5s; }
+        .orb-3 { width: 300px; height: 300px; background: rgba(16, 185, 129, var(--orb-opacity)); top: 40%; left: 30%; animation-delay: -10s; }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-50px) scale(1.05); }
+            100% { transform: translateY(50px) scale(0.95); }
+        }
+
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-enter {
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.15s; }
+        .delay-3 { animation-delay: 0.2s; }
+        .delay-4 { animation-delay: 0.3s; }
+
+        /* Custom Navbar */
+        .navbar-custom {
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 1rem 0;
+            transition: background-color 0.4s ease, border-color 0.4s ease;
+        }
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.6rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-muted) !important;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-main) !important;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+        }
+
+        /* Glassmorphic Cards */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 24px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.4s ease, border-color 0.4s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3), var(--accent-glow);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Buttons */
+        .btn-gradient {
+            background: var(--primary-gradient);
+            color: var(--btn-text) !important;
+            border: none;
+            border-radius: 12px;
+            padding: 0.8rem 2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            box-shadow: var(--accent-glow);
+        }
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        .btn-outline-custom {
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            border-radius: 12px;
+            font-weight: 600;
+            background: var(--input-bg);
+            transition: all 0.3s ease;
+        }
+        .btn-outline-custom:hover {
+            background: var(--table-hover);
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+
+        /* Forms */
+        .form-control, .input-group-text {
+            background-color: var(--input-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            background-color: var(--input-focus-bg);
+            border-color: var(--text-highlight);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+            color: var(--text-main);
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        .input-group-text { color: var(--text-highlight); }
+        
+        .form-label { font-weight: 600; font-size: 0.9rem; letter-spacing: 0.5px; }
+
+        /* Tables & Lists */
+        .table { color: var(--text-main) !important; }
+        .table th {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            color: var(--text-muted) !important;
+            border-bottom: 2px solid var(--card-border) !important;
+            background: transparent !important;
+        }
+        .table td { border-bottom: 1px solid var(--card-border) !important; vertical-align: middle; background: transparent !important; color: var(--text-main) !important; }
+        .table tbody tr { transition: background-color 0.2s ease; }
+        .table tbody tr:hover { background-color: var(--table-hover) !important; }
+
+        .main-content { margin-top: 7rem; flex: 1; z-index: 10; }
+
+        /* Theme Toggle Icon */
+        .theme-toggle-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .theme-toggle-btn:hover {
+            background: var(--table-hover);
+            color: var(--text-highlight);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas" style="position: fixed; top: 0; left: 0; z-index: -4; pointer-events: none; opacity: 1; transition: opacity 0.5s ease;"></canvas>
+    
+    <!-- Background Animated Orbs -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <nav class="navbar navbar-custom fixed-top">
+        <div class="container animate-enter">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fa-solid fa-shield-halved me-2"></i>privi<span style="color: var(--text-highlight);">X</span>
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <!-- Persistent Theme Toggle -->
+                <button class="theme-toggle-btn me-2 border-0" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fa-solid fa-moon" id="themeIconMobile"></i>
+                </button>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+                    <i class="fa-solid fa-bars fs-4" style="color: var(--text-main);"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+            
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" style="background: var(--nav-bg); backdrop-filter: blur(20px); border-left: 1px solid var(--card-border); z-index: 1050;">
+        <div class="offcanvas-header border-bottom" style="border-color: var(--card-border) !important;">
+            <h5 class="offcanvas-title fw-bold" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Navigation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" style="filter: var(--btn-close-filter);"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                {% if session.get('user_id') %}
+                    <li class="nav-item mb-2">
+                        <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="fa-solid fa-chart-pie me-2"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link {% if request.path == '/my-files' %}active{% endif %}" href="{{ url_for('my_files') }}">
+                            <i class="fa-solid fa-folder-open me-2"></i> My Files
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link {% if request.path == '/shared-files' %}active{% endif %}" href="{{ url_for('shared_files') }}">
+                            <i class="fa-solid fa-users me-2"></i> Shared With Me
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="btn btn-outline-custom w-100 py-2 d-flex justify-content-center align-items-center" href="{{ url_for('logout') }}">
+                            <i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Logout
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{{ url_for('login') }}">Sign In</a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="btn btn-gradient w-100 py-2" href="{{ url_for('signup') }}">Sign Up</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="container main-content pb-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="animate-enter delay-1">
+                {% for category, message in messages %}
+                    <div class="alert alert-dismissible fade show glass-card mb-4" role="alert" style="border-left: 4px solid var(--text-highlight);">
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid fa-circle-info fs-4 me-3" style="color: var(--text-highlight);"></i>
+                            <div class="fw-medium text-main">{{ message }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="filter: var(--btn-close-filter);"></button>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Global Footer -->
+    <footer class="mt-auto py-4 mx-3 mb-3 glass-card" style="border-radius: 20px; text-align: center;">
+        <div class="container">
+            <span class="text-muted"><i class="fa-solid fa-shield-halved me-1"></i> privi<span style="color: var(--text-highlight);">X</span> &copy; <script>document.write(new Date().getFullYear())</script>. Secure Vault Protocol.</span>
+        </div>
+    </footer>
+
+    {% block modals %}{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Particle Network Animation
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray = [];
+        
+        // Define color based on theme
+        function getRGBArray() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            return theme === 'dark' ? [56, 189, 248] : [59, 130, 246]; // Cyan for dark, Blue for light
+        }
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+            }
+            draw(rgb) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.5)`;
+                ctx.fill();
+            }
+            update(rgb) {
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw(rgb);
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            // Dynamically calculate number based on screen size
+            let numberOfParticles = (canvas.height * canvas.width) / 18000;
+            if(numberOfParticles > 150) numberOfParticles = 150; // Cap
+            
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2.5) + 0.5;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 1.5) - 0.75;
+                let directionY = (Math.random() * 1.5) - 0.75;
+                particlesArray.push(new Particle(x, y, directionX, directionY, size));
+            }
+        }
+
+        function connect(rgb) {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                    + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    if (distance < (canvas.width/9) * (canvas.height/9)) {
+                        opacityValue = 1 - (distance / 20000);
+                        if (opacityValue > 0) {
+                            ctx.strokeStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacityValue * 0.4})`;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                            ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            
+            const currentRGB = getRGBArray();
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update(currentRGB);
+            }
+            connect(currentRGB);
+        }
+
+        window.addEventListener('resize', function() {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            init();
+        });
+
+        init();
+        animate();
+
+        // Previous Theme Logic
+        function updateThemeIcons(theme) {
+            const iconDesktop = document.getElementById('themeIconDesktop');
+            const iconMobile = document.getElementById('themeIconMobile');
+            
+            if (theme === 'dark') {
+                if (iconDesktop) { iconDesktop.className = 'fa-solid fa-sun'; }
+                if (iconMobile) { iconMobile.className = 'fa-solid fa-sun'; }
+                document.documentElement.style.setProperty('--btn-close-filter', 'invert(1) grayscale(100%) brightness(200%)');
+            } else {
+                if (iconDesktop) { iconDesktop.className = 'fa-solid fa-moon'; }
+                if (iconMobile) { iconMobile.className = 'fa-solid fa-moon'; }
+                document.documentElement.style.setProperty('--btn-close-filter', 'none');
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcons(newTheme);
+        }
+
+        // Initialize icons on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            updateThemeIcons(currentTheme);
+
+            // Auto-dismiss alerts after 4 seconds
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    try {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    } catch(e) {}
+                });
+            }, 4000);
+        });
+    </script>
+</body>
+</html>

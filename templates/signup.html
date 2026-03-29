@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-8 col-lg-5 animate-enter delay-1">
+        <div class="glass-card p-5" style="box-shadow: 0 25px 50px -12px var(--icon-bg-secondary);">
+            <div class="text-center mb-5">
+                <div class="d-inline-flex justify-content-center align-items-center rounded-circle border p-4 mb-4" style="background: var(--input-bg); border-color: var(--card-border) !important; box-shadow: 0 0 30px var(--icon-bg-secondary);">
+                    <i class="fa-solid fa-user-plus" style="font-size: 2.5rem; background: var(--secondary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                </div>
+                <h2 class="fw-bold mb-2 text-main" style="font-size: 2.2rem; letter-spacing: -1px;">Create Account</h2>
+                <p class="text-muted">Join priviX and secure your files.</p>
+            </div>
+            
+            <form action="{{ url_for('signup') }}" method="POST">
+                <div class="mb-4">
+                    <label for="username" class="form-label text-uppercase text-muted" style="font-size: 0.8rem; letter-spacing: 1px;">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text border-end-0" style="color: #a855f7;"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0" id="username" name="username" placeholder="Choose a username" required>
+                    </div>
+                </div>
+                <div class="mb-5">
+                    <label for="password" class="form-label text-uppercase text-muted" style="font-size: 0.8rem; letter-spacing: 1px;">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text border-end-0" style="color: #a855f7;"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" class="form-control border-start-0 ps-0" id="password" name="password" placeholder="Create a password" required>
+                    </div>
+                </div>
+                <div style="--primary-gradient: var(--secondary-gradient); --accent-glow: 0 0 20px rgba(168, 85, 247, 0.4);">
+                    <button type="submit" class="btn btn-gradient w-100 py-3 fs-5 mb-4">Sign Up</button>
+                </div>
+            </form>
+            
+            <div class="text-center border-top pt-4 mt-2">
+                <p class="text-muted small mb-0">Already have an account? <a href="{{ url_for('login') }}" class="fw-bold ms-1" style="color: #fbc2eb; text-decoration: none; letter-spacing: 0.5px;">Sign in</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
