@@ -14,11 +14,3 @@ priviX is a sleek, highly-secured file management network offering military-grad
 * **SQLite3**
 * **HTML5 / CSS3 / JavaScript** 
 * **Bootstrap 5** & **FontAwesome**
-
-##  Getting Started
-1. Clone the repository.
-2. Ensure you have Python installed.
-3. Start the local server:
-    ```bash
-    python app.py
-    ```
