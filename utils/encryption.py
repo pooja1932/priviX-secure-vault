@@ -1,8 +1,10 @@
 from cryptography.fernet import Fernet
 
-# Generate key (run once and store it)
-key = Fernet.generate_key()
-print("key:",key)
+def load_key():
+    with open("secret.key", "rb") as f:
+        return f.read()
+
+key = load_key()
 cipher = Fernet(key)
 
 
