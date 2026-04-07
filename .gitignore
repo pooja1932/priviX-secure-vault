@@ -1,0 +1,32 @@
+# Database
+*.db
+*.db-journal
+
+# Encrypted files (user data)
+encrypted_files/
+decrypted_files/
+uploaded_files/
+
+# Environment variables (secrets!)
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Diagnostic/migration scripts
+check_db.py
+migrate_db.py
+db_report.txt
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

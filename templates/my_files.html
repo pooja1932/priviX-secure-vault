@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+/* File List Card Styles */
+.file-list-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,245,255,0.12);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.file-list-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #00f5ff, #0284c7);
+    border-radius: 3px 0 0 3px;
+    box-shadow: 0 0 8px rgba(0,245,255,0.4);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.file-list-item:hover {
+    background: rgba(0,245,255,0.05);
+    border-color: rgba(0,245,255,0.25);
+    transform: translateX(4px);
+}
+.file-list-item:hover::before { opacity: 1; }
+
+.file-icon-box {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+.file-icon-box.pdf   { background: rgba(239,68,68,0.12); color: #ef4444; box-shadow: 0 0 12px rgba(239,68,68,0.15); }
+.file-icon-box.img   { background: rgba(16,185,129,0.12); color: #10b981; box-shadow: 0 0 12px rgba(16,185,129,0.15); }
+.file-icon-box.doc   { background: rgba(59,130,246,0.12); color: #3b82f6; box-shadow: 0 0 12px rgba(59,130,246,0.15); }
+.file-icon-box.zip   { background: rgba(245,158,11,0.12); color: #f59e0b; box-shadow: 0 0 12px rgba(245,158,11,0.15); }
+.file-icon-box.ppt   { background: rgba(249,115,22,0.12); color: #f97316; box-shadow: 0 0 12px rgba(249,115,22,0.15); }
+.file-icon-box.other { background: rgba(0,245,255,0.10); color: #00f5ff; box-shadow: 0 0 12px rgba(0,245,255,0.15); }
+
+/* Status Glow Dot */
+.status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+    animation: pulseDot 2s infinite;
+    margin-right: 6px;
+}
+@keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 4px #10b981; }
+    50%       { box-shadow: 0 0 12px #10b981, 0 0 4px #10b981; }
+}
+
+/* Upload Dropzone */
+.page-drop-zone {
+    border: 2px dashed rgba(0,245,255,0.3);
+    border-radius: 18px;
+    background: rgba(0,245,255,0.02);
+    text-align: center;
+    padding: 32px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+.page-drop-zone:hover, .page-drop-zone.drag-over {
+    border-color: #00f5ff;
+    background: rgba(0,245,255,0.06);
+    box-shadow: 0 0 30px rgba(0,245,255,0.12);
+}
+.page-drop-zone .drop-icon {
+    font-size: 2.5rem; color: #00f5ff;
+    filter: drop-shadow(0 0 10px rgba(0,245,255,0.4));
+    margin-bottom: 0.75rem;
+}
+
+/* Search / Filter Bar */
+.search-filter-bar {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,245,255,0.12);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 1.2rem;
+}
+.search-filter-bar input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    flex: 1;
+}
+.search-filter-bar input::placeholder { color: #8892a4; }
+
+/* Action Icon Buttons */
+.action-btn-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    border: 1px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+.action-btn-icon.download { border-color: rgba(0,245,255,0.35); color: #00f5ff; background: rgba(0,245,255,0.07); }
+.action-btn-icon.download:hover { background: rgba(0,245,255,0.18); box-shadow: 0 0 12px rgba(0,245,255,0.25); }
+.action-btn-icon.delete { border-color: rgba(239,68,68,0.35); color: #ef4444; background: rgba(239,68,68,0.07); }
+.action-btn-icon.delete:hover { background: rgba(239,68,68,0.18); box-shadow: 0 0 12px rgba(239,68,68,0.25); }
+.action-btn-icon.share { border-color: rgba(16,185,129,0.35); color: #10b981; background: rgba(16,185,129,0.07); }
+.action-btn-icon.share:hover { background: rgba(16,185,129,0.18); box-shadow: 0 0 12px rgba(16,185,129,0.25); }
+
+/* Tooltip */
+.action-btn-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,20,40,0.95);
+    border: 1px solid rgba(0,245,255,0.2);
+    color: #f8fafc;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.action-btn-icon:hover::after { opacity: 1; }
+
+/* Share expand area */
+.share-expand {
+    display: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0,245,255,0.08);
+}
+.share-expand.open { display: flex; gap: 8px; align-items: center; }
+</style>
+
+<!-- Page Header -->
+<div class="mb-3 stagger-enter">
+    <a href="{{ url_for('dashboard') }}" class="text-decoration-none" style="color:var(--text-muted);font-weight:600;transition:color 0.3s;"
+       onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Overview
+    </a>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 stagger-enter delay-1">
+    <div>
+        <h2 class="fw-bold mb-1" style="color:var(--text-main);">
+            <i class="fa-solid fa-folder-open me-2" style="color:#f59e0b;"></i>My Uploaded Files
+        </h2>
+        <p style="color:var(--text-muted);margin-bottom:0;font-size:0.9rem;">Manage all the files you've encrypted and uploaded.</p>
+    </div>
+    <button class="btn btn-gradient mt-3 mt-md-0" data-bs-toggle="modal" data-bs-target="#uploadModal">
+        <i class="fa-solid fa-arrow-up-from-bracket me-2"></i>Upload File
+    </button>
+</div>
+
+<!-- Inline Drop Zone (outside modal) -->
+<div class="page-drop-zone stagger-enter delay-2" id="pageDropZone">
+    <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+    <p class="mb-0" style="font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--text-main);">Drop files here to upload</p>
+    <p class="mb-0" style="color:var(--text-muted);font-size:0.85rem;">or click "Upload File" above</p>
+</div>
+
+<!-- Search & Filter -->
+<div class="search-filter-bar stagger-enter delay-2">
+    <i class="fa-solid fa-magnifying-glass" style="color:#8892a4;"></i>
+    <input type="text" id="fileSearch" placeholder="Search files..." oninput="filterFiles()">
+    <span style="color:rgba(0,245,255,0.3);">|</span>
+    <select id="fileFilter" onchange="filterFiles()" style="background:transparent;border:none;outline:none;color:var(--text-muted);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">
+        <option value="all" style="background:var(--bg-color);">All Types</option>
+        <option value="pdf" style="background:var(--bg-color);">PDF</option>
+        <option value="img" style="background:var(--bg-color);">Images</option>
+        <option value="doc" style="background:var(--bg-color);">Documents</option>
+        <option value="zip" style="background:var(--bg-color);">Archives</option>
+    </select>
+    <span class="ms-auto badge" style="background:rgba(0,245,255,0.1);color:#00f5ff;padding:5px 12px;border-radius:8px;font-size:0.8rem;">
+        {{ uploaded_files|length }} files
+    </span>
+</div>
+
+<!-- File List -->
+<div class="stagger-enter delay-3" id="fileListContainer">
+    {% if uploaded_files %}
+        {% for file in uploaded_files %}
+        {% set ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'other' %}
+        {% set icon_class = 'pdf' if ext == 'pdf' else ('img' if ext in ['png','jpg','jpeg','gif','webp','svg'] else ('doc' if ext in ['doc','docx','txt','odt','xls','xlsx','csv'] else ('zip' if ext in ['zip','rar','7z','tar','gz'] else ('ppt' if ext in ['ppt','pptx'] else 'other')))) %}
+        {% set icon = 'fa-file-pdf' if icon_class == 'pdf' else ('fa-file-image' if icon_class == 'img' else ('fa-file-lines' if icon_class == 'doc' else ('fa-file-zipper' if icon_class == 'zip' else ('fa-file-powerpoint' if icon_class == 'ppt' else 'fa-file')))) %}
+
+        <div class="file-list-item" data-filename="{{ file.filename.lower() }}" data-type="{{ icon_class }}">
+            <!-- File Icon -->
+            <div class="file-icon-box {{ icon_class }}">
+                <i class="fa-regular {{ icon }}"></i>
+            </div>
+
+            <!-- File Info -->
+            <div class="flex-grow-1 min-width-0">
+                <div style="font-weight:600;font-size:0.95rem;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ file.filename }}</div>
+                <div style="font-size:0.78rem;color:var(--text-meta);margin-top:2px;">
+                    <span class="status-dot"></span>
+                    <span style="color:#10b981;font-weight:600;">Encrypted</span>
+                    <span class="mx-2" style="color:var(--card-border);">•</span>
+                    <span style="text-transform:uppercase;letter-spacing:0.5px;">{{ ext }}</span>
+                    <span class="mx-2" style="color:var(--card-border);">•</span>
+                    <span style="letter-spacing:0.3px;">{{ file.created_at | format_ist_date }}</span>
+                </div>
+
+                <!-- Share form (expandable) -->
+                <form method="POST" action="{{ url_for('share_file', file_id=file.id) }}" class="share-expand" id="shareArea{{ file.id }}">
+                    <div style="display:flex;align-items:center;background:var(--input-bg);border:1px solid var(--card-border);border-radius:8px;padding:4px 8px;flex:1;" id="tagContainer{{ file.id }}" onclick="document.getElementById('tagInput{{ file.id }}').focus()">
+                        <input type="text" id="tagInput{{ file.id }}" placeholder="Add username, press Enter" style="background:transparent;border:none;outline:none;color:var(--text-main);font-size:0.82rem;flex:1;min-width:120px;" onkeydown="handleTagInput(event, {{ file.id }})">
+                    </div>
+                    <input type="hidden" name="target_username" id="hiddenTargetUsernames{{ file.id }}">
+                    <button type="submit" class="btn btn-sm" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#10b981;border-radius:8px;font-size:0.8rem;padding:5px 14px;white-space:nowrap;" onclick="prepareSubmit({{ file.id }})">
+                        <i class="fa-solid fa-paper-plane me-1"></i>Send
+                    </button>
+                </form>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 align-items-center flex-shrink-0">
+                <a href="{{ url_for('download_file', file_id=file.id) }}" class="action-btn-icon download" data-tooltip="Download">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                </a>
+                <button class="action-btn-icon share" data-tooltip="Share" onclick="toggleShare({{ file.id }})">
+                    <i class="fa-solid fa-share-nodes"></i>
+                </button>
+                <button class="action-btn-icon delete" data-tooltip="Delete"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal{{ file.id }}">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5" style="animation: fadeSlideUp 0.6s ease forwards;">
+            <div style="width:100px;height:100px;background:rgba(0,245,255,0.06);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;border:1px solid rgba(0,245,255,0.15);">
+                <i class="fa-solid fa-vault" style="font-size:2.5rem;color:#00f5ff;filter:drop-shadow(0 0 10px rgba(0,245,255,0.4));"></i>
+            </div>
+            <h3 class="fw-bold mb-2" style="color:#f8fafc;">Your Vault is Empty</h3>
+            <p style="color:#8892a4;font-size:1rem;margin-bottom:1.5rem;">Encrypt and upload your first file to get started.</p>
+            <button class="btn btn-gradient px-5 py-3" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="fa-solid fa-cloud-arrow-up me-2"></i>Upload First File
+            </button>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:rgba(10,20,40,0.95);backdrop-filter:blur(20px);border:1px solid rgba(0,245,255,0.15);border-radius:24px;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h4 class="modal-title fw-bold text-center w-100" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">
+            <i class="fa-solid fa-cloud-arrow-up me-2" style="color:#00f5ff;"></i>Upload File
+        </h4>
+        <button type="button" class="btn-close position-absolute" style="right:20px;top:20px;filter:invert(1);" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+          <div class="upload-zone text-center p-5 mb-3" id="modalUploadZone" style="border:2px dashed rgba(0,245,255,0.3);border-radius:16px;background:rgba(0,245,255,0.03);cursor:pointer;transition:all 0.3s ease;">
+            <i class="fa-solid fa-cloud-arrow-up mb-3" style="font-size:3.5rem;color:#00f5ff;filter:drop-shadow(0 0 10px rgba(0,245,255,0.4));"></i>
+            <h5 class="fw-bold mb-2" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">Drag &amp; Drop</h5>
+            <p class="mb-0" style="color:#8892a4;font-size:0.9rem;">Click to browse your files</p>
+            <input type="file" style="opacity:0;position:absolute;z-index:-1;width:1px;height:1px;" id="modalFileInput" name="file" required>
+          </div>
+          <div class="text-center mb-3"><small id="modalFileName" style="color:#00f5ff;"></small></div>
+          <button type="submit" class="btn btn-gradient w-100">
+            <i class="fa-solid fa-lock me-2"></i>Encrypt &amp; Upload
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modals -->
+{% for file in uploaded_files %}
+<div class="modal fade" id="deleteModal{{ file.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:rgba(10,20,40,0.95);backdrop-filter:blur(20px);border:1px solid rgba(239,68,68,0.2);border-radius:24px;">
+      <div class="modal-body p-5 text-center">
+        <div style="width:70px;height:70px;background:rgba(239,68,68,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;border:1px solid rgba(239,68,68,0.25);">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size:1.8rem;color:#ef4444;"></i>
+        </div>
+        <h4 class="fw-bold mb-2" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">Delete File?</h4>
+        <p style="color:#8892a4;">Are you sure you want to permanently delete <strong style="color:#f8fafc;">{{ file.filename }}</strong>?<br>This action cannot be undone.</p>
+        <div class="d-flex justify-content-center gap-3 mt-4">
+          <button class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+          <form method="POST" action="{{ url_for('delete_file_route', file_id=file.id) }}">
+            <button type="submit" class="btn" style="background:#ef4444;color:#fff;border-radius:12px;border:none;padding:0.7rem 1.8rem;font-weight:600;">Yes, Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<script>
+// Tag input system
+const userTags = {};
+
+function handleTagInput(e, fileId) {
+    if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const input = document.getElementById('tagInput' + fileId);
+        const val = input.value.trim().replace(/,/g, '');
+        if (val) {
+            if (!userTags[fileId]) userTags[fileId] = [];
+            if (!userTags[fileId].includes(val) && userTags[fileId].length < 5) {
+                userTags[fileId].push(val);
+                renderTags(fileId);
+            }
+            input.value = '';
+        }
+    }
+}
+
+function removeTag(fileId, username) {
+    if (userTags[fileId]) {
+        userTags[fileId] = userTags[fileId].filter(u => u !== username);
+        renderTags(fileId);
+    }
+}
+
+function renderTags(fileId) {
+    const container = document.getElementById('tagContainer' + fileId);
+    const input = document.getElementById('tagInput' + fileId);
+    container.innerHTML = '';
+    if (userTags[fileId]) {
+        userTags[fileId].forEach(u => {
+            const tag = document.createElement('span');
+            tag.style.cssText = 'background:rgba(0,245,255,0.1);color:#00f5ff;border:1px solid rgba(0,245,255,0.3);border-radius:6px;font-size:0.75rem;padding:2px 8px;display:inline-flex;align-items:center;gap:5px;margin-right:4px;';
+            tag.innerHTML = `${u}<i class="fa-solid fa-xmark" style="cursor:pointer;opacity:0.7;" onclick="removeTag(${fileId},'${u}');event.stopPropagation();"></i>`;
+            container.appendChild(tag);
+        });
+    }
+    container.appendChild(input);
+}
+
+function prepareSubmit(fileId) {
+    const input = document.getElementById('tagInput' + fileId);
+    if (input.value.trim()) {
+        const val = input.value.trim().replace(/,/g, '');
+        if (!userTags[fileId]) userTags[fileId] = [];
+        if (!userTags[fileId].includes(val) && userTags[fileId].length < 5) userTags[fileId].push(val);
+    }
+    document.getElementById('hiddenTargetUsernames' + fileId).value = (userTags[fileId] || []).join(',');
+}
+
+function toggleShare(fileId) {
+    const area = document.getElementById('shareArea' + fileId);
+    area.classList.toggle('open');
+    if (area.classList.contains('open')) document.getElementById('tagInput' + fileId).focus();
+}
+
+// Search + Filter
+function filterFiles() {
+    const query = document.getElementById('fileSearch').value.toLowerCase();
+    const type = document.getElementById('fileFilter').value;
+    document.querySelectorAll('.file-list-item').forEach(item => {
+        const name = item.getAttribute('data-filename') || '';
+        const itype = item.getAttribute('data-type') || '';
+        const matchName = name.includes(query);
+        const matchType = type === 'all' || itype === type;
+        item.style.display = matchName && matchType ? '' : 'none';
+    });
+}
+
+// Page drop zone redirect to modal
+document.getElementById('pageDropZone').addEventListener('click', () => {
+    document.querySelector('[data-bs-target="#uploadModal"]').click();
+});
+document.getElementById('pageDropZone').addEventListener('dragover', (e) => {
+    e.preventDefault();
+    document.getElementById('pageDropZone').classList.add('drag-over');
+});
+document.getElementById('pageDropZone').addEventListener('dragleave', () => {
+    document.getElementById('pageDropZone').classList.remove('drag-over');
+});
+document.getElementById('pageDropZone').addEventListener('drop', (e) => {
+    e.preventDefault();
+    document.getElementById('pageDropZone').classList.remove('drag-over');
+    document.querySelector('[data-bs-target="#uploadModal"]').click();
+});
+
+// Modal upload zone 
+const muz = document.getElementById('modalUploadZone');
+const mfi = document.getElementById('modalFileInput');
+if (muz && mfi) {
+    muz.addEventListener('click', () => mfi.click());
+    mfi.addEventListener('change', () => {
+        if (mfi.files.length > 0) {
+            document.getElementById('modalFileName').textContent = '✓ ' + mfi.files[0].name;
+            muz.style.borderColor = '#00f5ff';
+            muz.style.background = 'rgba(0,245,255,0.07)';
+        }
+    });
+}
+</script>
+{% endblock %}

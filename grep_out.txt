@@ -1,0 +1,1500 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+/* File List Card Styles */
+.file-list-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,245,255,0.12);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.file-list-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #00f5ff, #0284c7);
+    border-radius: 3px 0 0 3px;
+    box-shadow: 0 0 8px rgba(0,245,255,0.4);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.file-list-item:hover {
+    background: rgba(0,245,255,0.05);
+    border-color: rgba(0,245,255,0.25);
+    transform: translateX(4px);
+}
+.file-list-item:hover::before { opacity: 1; }
+.file-icon-box {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+.file-icon-box.pdf   { background: rgba(239,68,68,0.12); color: #ef4444; box-shadow: 0 0 12px rgba(239,68,68,0.15); }
+.file-icon-box.img   { background: rgba(16,185,129,0.12); color: #10b981; box-shadow: 0 0 12px rgba(16,185,129,0.15); }
+.file-icon-box.doc   { background: rgba(59,130,246,0.12); color: #3b82f6; box-shadow: 0 0 12px rgba(59,130,246,0.15); }
+.file-icon-box.zip   { background: rgba(245,158,11,0.12); color: #f59e0b; box-shadow: 0 0 12px rgba(245,158,11,0.15); }
+.file-icon-box.ppt   { background: rgba(249,115,22,0.12); color: #f97316; box-shadow: 0 0 12px rgba(249,115,22,0.15); }
+.file-icon-box.other { background: rgba(0,245,255,0.10); color: #00f5ff; box-shadow: 0 0 12px rgba(0,245,255,0.15); }
+/* Status Glow Dot */
+.status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+    animation: pulseDot 2s infinite;
+    margin-right: 6px;
+}
+@keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 4px #10b981; }
+    50%       { box-shadow: 0 0 12px #10b981, 0 0 4px #10b981; }
+}
+/* Upload Dropzone */
+.page-drop-zone {
+    border: 2px dashed rgba(0,245,255,0.3);
+    border-radius: 18px;
+    background: rgba(0,245,255,0.02);
+    text-align: center;
+    padding: 32px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+.page-drop-zone:hover, .page-drop-zone.drag-over {
+    border-color: #00f5ff;
+    background: rgba(0,245,255,0.06);
+    box-shadow: 0 0 30px rgba(0,245,255,0.12);
+}
+.page-drop-zone .drop-icon {
+    font-size: 2.5rem; color: #00f5ff;
+    filter: drop-shadow(0 0 10px rgba(0,245,255,0.4));
+    margin-bottom: 0.75rem;
+}
+/* Search / Filter Bar */
+.search-filter-bar {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,245,255,0.12);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 1.2rem;
+}
+.search-filter-bar input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    flex: 1;
+}
+.search-filter-bar input::placeholder { color: #8892a4; }
+/* Action Icon Buttons */
+.action-btn-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    border: 1px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+.action-btn-icon.download { border-color: rgba(0,245,255,0.35); color: #00f5ff; background: rgba(0,245,255,0.07); }
+.action-btn-icon.download:hover { background: rgba(0,245,255,0.18); box-shadow: 0 0 12px rgba(0,245,255,0.25); }
+.action-btn-icon.delete { border-color: rgba(239,68,68,0.35); color: #ef4444; background: rgba(239,68,68,0.07); }
+.action-btn-icon.delete:hover { background: rgba(239,68,68,0.18); box-shadow: 0 0 12px rgba(239,68,68,0.25); }
+.action-btn-icon.share { border-color: rgba(16,185,129,0.35); color: #10b981; background: rgba(16,185,129,0.07); }
+.action-btn-icon.share:hover { background: rgba(16,185,129,0.18); box-shadow: 0 0 12px rgba(16,185,129,0.25); }
+/* Tooltip */
+.action-btn-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,20,40,0.95);
+    border: 1px solid rgba(0,245,255,0.2);
+    color: #f8fafc;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.action-btn-icon:hover::after { opacity: 1; }
+/* Share expand area */
+.share-expand {
+    display: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0,245,255,0.08);
+}
+.share-expand.open { display: flex; gap: 8px; align-items: center; }
+</style>
+<!-- Page Header -->
+<div class="mb-3 stagger-enter">
+    <a href="{{ url_for('dashboard') }}" class="text-decoration-none" style="color:var(--text-muted);font-weight:600;transition:color 0.3s;"
+       onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Overview
+    </a>
+</div>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 stagger-enter delay-1">
+    <div>
+        <h2 class="fw-bold mb-1" style="color:var(--text-main);">
+            <i class="fa-solid fa-folder-open me-2" style="color:#f59e0b;"></i>My Uploaded Files
+        </h2>
+        <p style="color:var(--text-muted);margin-bottom:0;font-size:0.9rem;">Manage all the files you've encrypted and uploaded.</p>
+    </div>
+    <button class="btn btn-gradient mt-3 mt-md-0" data-bs-toggle="modal" data-bs-target="#uploadModal">
+        <i class="fa-solid fa-arrow-up-from-bracket me-2"></i>Upload File
+    </button>
+</div>
+<!-- Inline Drop Zone (outside modal) -->
+<div class="page-drop-zone stagger-enter delay-2" id="pageDropZone">
+    <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+    <p class="mb-0" style="font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--text-main);">Drop files here to upload</p>
+    <p class="mb-0" style="color:var(--text-muted);font-size:0.85rem;">or click "Upload File" above</p>
+</div>
+<!-- Search & Filter -->
+<div class="search-filter-bar stagger-enter delay-2">
+    <i class="fa-solid fa-magnifying-glass" style="color:#8892a4;"></i>
+    <input type="text" id="fileSearch" placeholder="Search files..." oninput="filterFiles()">
+    <span style="color:rgba(0,245,255,0.3);">|</span>
+    <select id="fileFilter" onchange="filterFiles()" style="background:transparent;border:none;outline:none;color:var(--text-muted);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">
+        <option value="all" style="background:var(--bg-color);">All Types</option>
+        <option value="pdf" style="background:var(--bg-color);">PDF</option>
+        <option value="img" style="background:var(--bg-color);">Images</option>
+        <option value="doc" style="background:var(--bg-color);">Documents</option>
+        <option value="zip" style="background:var(--bg-color);">Archives</option>
+    </select>
+    <span class="ms-auto badge" style="background:rgba(0,245,255,0.1);color:#00f5ff;padding:5px 12px;border-radius:8px;font-size:0.8rem;">
+        {{ uploaded_files|length }} files
+    </span>
+</div>
+<!-- File List -->
+<div class="stagger-enter delay-3" id="fileListContainer">
+    {% if uploaded_files %}
+        {% for file in uploaded_files %}
+        {% set ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'other' %}
+        {% set icon_class = 'pdf' if ext == 'pdf' else ('img' if ext in ['png','jpg','jpeg','gif','webp','svg'] else ('doc' if ext in ['doc','docx','txt','odt','xls','xlsx','csv'] else ('zip' if ext in ['zip','rar','7z','tar','gz'] else ('ppt' if ext in ['ppt','pptx'] else 'other')))) %}
+        {% set icon = 'fa-file-pdf' if icon_class == 'pdf' else ('fa-file-image' if icon_class == 'img' else ('fa-file-lines' if icon_class == 'doc' else ('fa-file-zipper' if icon_class == 'zip' else ('fa-file-powerpoint' if icon_class == 'ppt' else 'fa-file')))) %}
+        <div class="file-list-item" data-filename="{{ file.filename.lower() }}" data-type="{{ icon_class }}">
+            <!-- File Icon -->
+            <div class="file-icon-box {{ icon_class }}">
+                <i class="fa-regular {{ icon }}"></i>
+            </div>
+            <!-- File Info -->
+            <div class="flex-grow-1 min-width-0">
+                <div style="font-weight:600;font-size:0.95rem;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ file.filename }}</div>
+                <div style="font-size:0.78rem;color:var(--text-meta);margin-top:2px;">
+                    <span class="status-dot"></span>
+                    <span style="color:#10b981;font-weight:600;">Encrypted</span>
+                    <span class="mx-2" style="color:var(--card-border);">•</span>
+                    <span style="text-transform:uppercase;letter-spacing:0.5px;">{{ ext }}</span>
+                    <span class="mx-2" style="color:var(--card-border);">•</span>
+                    <span style="letter-spacing:0.3px;">{{ file.created_at | format_ist_date }}</span>
+                </div>
+                <!-- Share form (expandable) -->
+                <form method="POST" action="{{ url_for('share_file', file_id=file.id) }}" class="share-expand" id="shareArea{{ file.id }}">
+                    <div style="display:flex;align-items:center;background:var(--input-bg);border:1px solid var(--card-border);border-radius:8px;padding:4px 8px;flex:1;" id="tagContainer{{ file.id }}" onclick="document.getElementById('tagInput{{ file.id }}').focus()">
+                        <input type="text" id="tagInput{{ file.id }}" placeholder="Add username, press Enter" style="background:transparent;border:none;outline:none;color:var(--text-main);font-size:0.82rem;flex:1;min-width:120px;" onkeydown="handleTagInput(event, {{ file.id }})">
+                    </div>
+                    <input type="hidden" name="target_username" id="hiddenTargetUsernames{{ file.id }}">
+                    <button type="submit" class="btn btn-sm" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#10b981;border-radius:8px;font-size:0.8rem;padding:5px 14px;white-space:nowrap;" onclick="prepareSubmit({{ file.id }})">
+                        <i class="fa-solid fa-paper-plane me-1"></i>Send
+                    </button>
+                </form>
+            </div>
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 align-items-center flex-shrink-0">
+                <a href="{{ url_for('download_file', file_id=file.id) }}" class="action-btn-icon download" data-tooltip="Download">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                </a>
+                <button class="action-btn-icon share" data-tooltip="Share" onclick="toggleShare({{ file.id }})">
+                    <i class="fa-solid fa-share-nodes"></i>
+                </button>
+                <button class="action-btn-icon delete" data-tooltip="Delete"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal{{ file.id }}">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5" style="animation: fadeSlideUp 0.6s ease forwards;">
+            <div style="width:100px;height:100px;background:rgba(0,245,255,0.06);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;border:1px solid rgba(0,245,255,0.15);">
+                <i class="fa-solid fa-vault" style="font-size:2.5rem;color:#00f5ff;filter:drop-shadow(0 0 10px rgba(0,245,255,0.4));"></i>
+            </div>
+            <h3 class="fw-bold mb-2" style="color:#f8fafc;">Your Vault is Empty</h3>
+            <p style="color:#8892a4;font-size:1rem;margin-bottom:1.5rem;">Encrypt and upload your first file to get started.</p>
+            <button class="btn btn-gradient px-5 py-3" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="fa-solid fa-cloud-arrow-up me-2"></i>Upload First File
+            </button>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block modals %}
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:rgba(10,20,40,0.95);backdrop-filter:blur(20px);border:1px solid rgba(0,245,255,0.15);border-radius:24px;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h4 class="modal-title fw-bold text-center w-100" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">
+            <i class="fa-solid fa-cloud-arrow-up me-2" style="color:#00f5ff;"></i>Upload File
+        </h4>
+        <button type="button" class="btn-close position-absolute" style="right:20px;top:20px;filter:invert(1);" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+          <div class="upload-zone text-center p-5 mb-3" id="modalUploadZone" style="border:2px dashed rgba(0,245,255,0.3);border-radius:16px;background:rgba(0,245,255,0.03);cursor:pointer;transition:all 0.3s ease;">
+            <i class="fa-solid fa-cloud-arrow-up mb-3" style="font-size:3.5rem;color:#00f5ff;filter:drop-shadow(0 0 10px rgba(0,245,255,0.4));"></i>
+            <h5 class="fw-bold mb-2" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">Drag &amp; Drop</h5>
+            <p class="mb-0" style="color:#8892a4;font-size:0.9rem;">Click to browse your files</p>
+            <input type="file" style="opacity:0;position:absolute;z-index:-1;width:1px;height:1px;" id="modalFileInput" name="file" required>
+          </div>
+          <div class="text-center mb-3"><small id="modalFileName" style="color:#00f5ff;"></small></div>
+          <button type="submit" class="btn btn-gradient w-100">
+            <i class="fa-solid fa-lock me-2"></i>Encrypt &amp; Upload
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Delete Modals -->
+{% for file in uploaded_files %}
+<div class="modal fade" id="deleteModal{{ file.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:rgba(10,20,40,0.95);backdrop-filter:blur(20px);border:1px solid rgba(239,68,68,0.2);border-radius:24px;">
+      <div class="modal-body p-5 text-center">
+        <div style="width:70px;height:70px;background:rgba(239,68,68,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;border:1px solid rgba(239,68,68,0.25);">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size:1.8rem;color:#ef4444;"></i>
+        </div>
+        <h4 class="fw-bold mb-2" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">Delete File?</h4>
+        <p style="color:#8892a4;">Are you sure you want to permanently delete <strong style="color:#f8fafc;">{{ file.filename }}</strong>?<br>This action cannot be undone.</p>
+        <div class="d-flex justify-content-center gap-3 mt-4">
+          <button class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+          <form method="POST" action="{{ url_for('delete_file_route', file_id=file.id) }}">
+            <button type="submit" class="btn" style="background:#ef4444;color:#fff;border-radius:12px;border:none;padding:0.7rem 1.8rem;font-weight:600;">Yes, Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+<script>
+// Tag input system
+const userTags = {};
+function handleTagInput(e, fileId) {
+    if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const input = document.getElementById('tagInput' + fileId);
+        const val = input.value.trim().replace(/,/g, '');
+        if (val) {
+            if (!userTags[fileId]) userTags[fileId] = [];
+            if (!userTags[fileId].includes(val) && userTags[fileId].length < 5) {
+                userTags[fileId].push(val);
+                renderTags(fileId);
+            }
+            input.value = '';
+        }
+    }
+}
+function removeTag(fileId, username) {
+    if (userTags[fileId]) {
+        userTags[fileId] = userTags[fileId].filter(u => u !== username);
+        renderTags(fileId);
+    }
+}
+function renderTags(fileId) {
+    const container = document.getElementById('tagContainer' + fileId);
+    const input = document.getElementById('tagInput' + fileId);
+    container.innerHTML = '';
+    if (userTags[fileId]) {
+        userTags[fileId].forEach(u => {
+            const tag = document.createElement('span');
+            tag.style.cssText = 'background:rgba(0,245,255,0.1);color:#00f5ff;border:1px solid rgba(0,245,255,0.3);border-radius:6px;font-size:0.75rem;padding:2px 8px;display:inline-flex;align-items:center;gap:5px;margin-right:4px;';
+            tag.innerHTML = `${u}<i class="fa-solid fa-xmark" style="cursor:pointer;opacity:0.7;" onclick="removeTag(${fileId},'${u}');event.stopPropagation();"></i>`;
+            container.appendChild(tag);
+        });
+    }
+    container.appendChild(input);
+}
+function prepareSubmit(fileId) {
+    const input = document.getElementById('tagInput' + fileId);
+    if (input.value.trim()) {
+        const val = input.value.trim().replace(/,/g, '');
+        if (!userTags[fileId]) userTags[fileId] = [];
+        if (!userTags[fileId].includes(val) && userTags[fileId].length < 5) userTags[fileId].push(val);
+    }
+    document.getElementById('hiddenTargetUsernames' + fileId).value = (userTags[fileId] || []).join(',');
+}
+function toggleShare(fileId) {
+    const area = document.getElementById('shareArea' + fileId);
+    area.classList.toggle('open');
+    if (area.classList.contains('open')) document.getElementById('tagInput' + fileId).focus();
+}
+// Search + Filter
+function filterFiles() {
+    const query = document.getElementById('fileSearch').value.toLowerCase();
+    const type = document.getElementById('fileFilter').value;
+    document.querySelectorAll('.file-list-item').forEach(item => {
+        const name = item.getAttribute('data-filename') || '';
+        const itype = item.getAttribute('data-type') || '';
+        const matchName = name.includes(query);
+        const matchType = type === 'all' || itype === type;
+        item.style.display = matchName && matchType ? '' : 'none';
+    });
+}
+// Page drop zone redirect to modal
+document.getElementById('pageDropZone').addEventListener('click', () => {
+    document.querySelector('[data-bs-target="#uploadModal"]').click();
+});
+document.getElementById('pageDropZone').addEventListener('dragover', (e) => {
+    e.preventDefault();
+    document.getElementById('pageDropZone').classList.add('drag-over');
+});
+document.getElementById('pageDropZone').addEventListener('dragleave', () => {
+    document.getElementById('pageDropZone').classList.remove('drag-over');
+});
+document.getElementById('pageDropZone').addEventListener('drop', (e) => {
+    e.preventDefault();
+    document.getElementById('pageDropZone').classList.remove('drag-over');
+    document.querySelector('[data-bs-target="#uploadModal"]').click();
+});
+// Modal upload zone 
+const muz = document.getElementById('modalUploadZone');
+const mfi = document.getElementById('modalFileInput');
+if (muz && mfi) {
+    muz.addEventListener('click', () => mfi.click());
+    mfi.addEventListener('change', () => {
+        if (mfi.files.length > 0) {
+            document.getElementById('modalFileName').textContent = '✓ ' + mfi.files[0].name;
+            muz.style.borderColor = '#00f5ff';
+            muz.style.background = 'rgba(0,245,255,0.07)';
+        }
+    });
+}
+</script>
+{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+<style>
+/* Dashboard Specific Styles */
+.hero-banner {
+    background: linear-gradient(135deg, rgba(0,245,255,0.08) 0%, rgba(139,92,246,0.08) 100%);
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 24px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+.hero-banner::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(0,245,255,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.hero-banner::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.username-highlight {
+    background: linear-gradient(135deg, #00f5ff, #8b5cf6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+/* Stat Cards */
+.stat-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 20px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 100%;
+    text-decoration: none;
+    display: block;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    border-radius: 4px 0 0 4px;
+    transition: all 0.3s ease;
+}
+.stat-card.files::before { background: linear-gradient(to bottom, #00f5ff, #0284c7); box-shadow: 0 0 15px rgba(0,245,255,0.5); }
+.stat-card.shared::before { background: linear-gradient(to bottom, #10b981, #065f46); box-shadow: 0 0 15px rgba(16,185,129,0.5); }
+.stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3), 0 0 20px rgba(0,245,255,0.1);
+    background: rgba(255,255,255,0.05);
+}
+.stat-icon-badge {
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+.stat-icon-badge.teal {
+    background: rgba(0,245,255,0.1);
+    box-shadow: 0 0 20px rgba(0,245,255,0.2), inset 0 0 20px rgba(0,245,255,0.05);
+    color: #00f5ff;
+}
+.stat-icon-badge.green {
+    background: rgba(16,185,129,0.1);
+    box-shadow: 0 0 20px rgba(16,185,129,0.2), inset 0 0 20px rgba(16,185,129,0.05);
+    color: #10b981;
+}
+.stat-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+.stat-number.teal { color: #00f5ff; text-shadow: 0 0 20px rgba(0,245,255,0.4); }
+.stat-number.green { color: #10b981; text-shadow: 0 0 20px rgba(16,185,129,0.4); }
+.stat-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.25rem;
+}
+.stat-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.stat-progress-bar {
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(128,128,128,0.12);
+    margin-top: 1.5rem;
+    overflow: hidden;
+}
+.stat-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+}
+.stat-progress-fill.teal { background: linear-gradient(90deg, #00f5ff, #0284c7); box-shadow: 0 0 10px rgba(0,245,255,0.4); }
+.stat-progress-fill.green { background: linear-gradient(90deg, #10b981, #065f46); box-shadow: 0 0 10px rgba(16,185,129,0.4); }
+/* Activity Feed */
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid rgba(0,245,255,0.07);
+    transition: background 0.2s;
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+.activity-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+}
+/* Donut Chart */
+.donut-wrapper {
+    position: relative;
+    width: 120px; height: 120px;
+    margin: 0 auto 1.5rem;
+}
+.donut-wrapper svg { transform: rotate(-90deg); }
+.donut-ring { fill: none; stroke: rgba(128,128,128,0.1); stroke-width: 12; }
+.donut-fill { fill: none; stroke-width: 12; stroke-linecap: round;
+    stroke-dasharray: 314; stroke-dashoffset: 200;
+    stroke: url(#donutGrad);
+    filter: drop-shadow(0 0 6px rgba(0,245,255,0.5));
+    transition: stroke-dashoffset 1.5s ease;
+}
+.donut-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+</style>
+<!-- HERO BANNER -->
+<div class="hero-banner stagger-enter">
+    <div class="row align-items-center" style="position:relative;z-index:1;">
+        <div class="col-md-8 mb-4 mb-md-0">
+            <p class="mb-1 small" style="color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;font-weight:600;">
+                <i class="fa-solid fa-circle" style="color:#10b981;font-size:0.5rem;vertical-align:middle;"></i>
+                &nbsp;Secure Vault Active
+            </p>
+            <h1 class="fw-bold mb-2" style="color:var(--text-main);font-size:2.8rem;letter-spacing:-1px;line-height:1.1;">
+                Welcome back, <span class="username-highlight">{{ username }}</span>
+            </h1>
+            <p style="color:var(--text-muted);font-size:1rem;margin-bottom:0;">
+                <i class="fa-solid fa-shield-halved me-2" style="color:var(--primary-color);"></i>
+                All your files are encrypted and protected.
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <button class="btn btn-gradient btn-lg py-3 px-4" data-bs-toggle="modal" data-bs-target="#uploadModal" style="border-radius:16px;">
+                <i class="fa-solid fa-cloud-arrow-up me-2"></i>Upload File
+            </button>
+        </div>
+    </div>
+</div>
+<!-- STAT CARDS ROW -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-6 stagger-enter delay-1">
+        <a href="{{ url_for('my_files') }}" class="stat-card files">
+            <div class="stat-icon-badge teal">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <div class="stat-number teal">{{ upload_count }}</div>
+            <div class="stat-label">My Uploaded Files</div>
+            <div class="stat-sub">Encrypted &amp; stored securely in your vault</div>
+            <div class="stat-progress-bar">
+                <div class="stat-progress-fill teal" style="width: {{ [upload_count * 10, 100]|min }}%;"></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-12 col-md-6 stagger-enter delay-2">
+        <a href="{{ url_for('shared_files') }}" class="stat-card shared">
+            <div class="stat-icon-badge green">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="stat-number green">{{ share_count }}</div>
+            <div class="stat-label">Files Shared With Me</div>
+            <div class="stat-sub">Accessible files shared by other users</div>
+            <div class="stat-progress-bar">
+                <div class="stat-progress-fill green" style="width: {{ [share_count * 10, 100]|min }}%;"></div>
+            </div>
+        </a>
+    </div>
+</div>
+<!-- BOTTOM ROW: Activity Feed + Storage Widget -->
+<div class="row g-4">
+    <!-- Recent Activity Feed -->
+    <div class="col-12 col-lg-8 stagger-enter delay-3">
+        <div class="stat-card" style="text-decoration:none;">
+            <h5 class="fw-bold mb-3" style="color:var(--text-main);font-family:'Space Grotesk',sans-serif;">
+                <i class="fa-solid fa-bolt me-2" style="color:var(--primary-color);"></i>Recent Activity
+            </h5>
+            {% if recent_logs %}
+                {% for log in recent_logs %}
+                <div class="activity-item">
+                    <div class="activity-icon" style="background:rgba(0,245,255,0.1);">
+                        <i class="fa-solid fa-clock-rotate-left" style="color:#00f5ff;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div style="font-weight:600;font-size:0.9rem;color:var(--text-main);">Action: {{ log.action.split(':')[0] | title }}</div>
+                        <div style="font-size:0.78rem;color:var(--text-muted);">{{ log.timestamp | format_ist_date }}</div>
+                    </div>
+                    {% set badge_text = log.action.split(':')[0] %}
+                    <span class="activity-badge" style="background:rgba(0,245,255,0.1);color:#00f5ff;border:1px solid rgba(0,245,255,0.2);">{{ badge_text | title }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4 text-muted"> <small>No recent activity</small> </div>
+            {% endif %}
+            <div class="text-center mt-3">
+                <small style="color:var(--text-muted);font-size:0.78rem;">
+                    <i class="fa-solid fa-lock me-1" style="color:var(--primary-color);"></i>
+                    All activity is logged and secured with AES encryption
+                </small>
+            </div>
+        </div>
+    </div>
+    <!-- Storage Widget -->
+    <div class="col-12 col-lg-4 stagger-enter delay-4">
+        <div class="stat-card" style="text-decoration:none;text-align:center;">
+            <h5 class="fw-bold mb-4" style="color:var(--text-main);font-family:'Space Grotesk',sans-serif;">
+                <i class="fa-solid fa-database me-2" style="color:#8b5cf6;"></i>Storage
+            </h5>
+            <div class="donut-wrapper">
+                <svg viewBox="0 0 120 120" width="120" height="120">
+                    <defs>
+                        <linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:var(--primary-color);stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="donut-ring" cx="60" cy="60" r="50"/>
+                    <circle class="donut-fill" cx="60" cy="60" r="50" id="storageFill"/>
+                </svg>
+                <div class="donut-center">
+                    <div style="font-family:'Space Grotesk',sans-serif;font-size:1.3rem;font-weight:700;color:var(--text-main);" id="storagePercent">0%</div>
+                    <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Used</div>
+                </div>
+            </div>
+            <div style="font-size:2rem;font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--text-main);" id="fileCountNum">{{ upload_count }}</div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.5rem;">files in vault</div>
+            {% set usage_color = '#ef4444' if used_pct >= 90 else ('#f59e0b' if used_pct >= 70 else 'var(--primary-color)') %}
+            <div style="font-size:0.8rem;font-weight:600;margin-bottom:1rem;">
+                <span style="color:{{ usage_color }};">{{ used_mb }} MB</span>
+                <span style="color:var(--text-muted);"> / {{ (total_mb / 1024) | int }} GB used</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">
+                <i class="fa-solid fa-circle-check me-1" style="color:#10b981;"></i>
+                AES-256 Encryption Active
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block modals %}
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background: rgba(10,20,40,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(0,245,255,0.15); border-radius: 24px;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h4 class="modal-title fw-bold text-center w-100" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">
+            <i class="fa-solid fa-cloud-arrow-up me-2" style="color:#00f5ff;"></i>Upload File
+        </h4>
+        <button type="button" class="btn-close position-absolute" style="right: 20px; top: 20px; filter: invert(1);" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+          <div class="upload-zone text-center p-5 mb-3" id="uploadZone" style="border: 2px dashed rgba(0,245,255,0.3); border-radius: 16px; background: rgba(0,245,255,0.03); cursor: pointer; transition: all 0.3s ease;">
+            <i class="fa-solid fa-cloud-arrow-up mb-3" style="font-size: 3.5rem; color: #00f5ff; filter:drop-shadow(0 0 10px rgba(0,245,255,0.4));"></i>
+            <h5 class="fw-bold mb-2" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">Drag &amp; Drop</h5>
+            <p class="mb-0" style="color:#8892a4;font-size:0.9rem;">Click to browse your files</p>
+            <input type="file" style="opacity: 0; position: absolute; z-index: -1; width: 1px; height: 1px;" id="fileInput" name="file" required>
+          </div>
+          <div class="text-center mb-3">
+            <small id="selectedFileName" style="color:#00f5ff;"></small>
+          </div>
+          <button type="submit" class="btn btn-gradient w-100">
+            <i class="fa-solid fa-lock me-2"></i>Encrypt &amp; Upload
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectedFileName = document.getElementById('selectedFileName');
+    uploadZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            selectedFileName.textContent = "✓ " + fileInput.files[0].name;
+            uploadZone.style.borderColor = '#00f5ff';
+            uploadZone.style.background = 'rgba(0,245,255,0.07)';
+        }
+    });
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#00f5ff';
+        uploadZone.style.background = 'rgba(0,245,255,0.07)';
+        uploadZone.style.boxShadow = '0 0 20px rgba(0,245,255,0.2)';
+    });
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.style.borderColor = 'rgba(0,245,255,0.3)';
+        uploadZone.style.background = 'rgba(0,245,255,0.03)';
+        uploadZone.style.boxShadow = 'none';
+    });
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const dt = e.dataTransfer;
+        if (dt.files.length > 0) {
+            fileInput.files = dt.files;
+            selectedFileName.textContent = "✓ " + dt.files[0].name;
+        }
+    });
+    // Animate donut chart on load — using REAL storage data from server
+    window.addEventListener('load', () => {
+        const usedPct = {{ used_pct }};  // e.g. 12.4
+        const pct = usedPct / 100;
+        const circumference = 2 * Math.PI * 50;
+        const offset = circumference * (1 - pct);
+        const fill = document.getElementById('storageFill');
+        const label = document.getElementById('storagePercent');
+        if (fill) {
+            fill.style.strokeDasharray = circumference;
+            fill.style.strokeDashoffset = offset;
+            // Change colour to red when near capacity
+            if (usedPct >= 90) {
+                fill.style.stroke = '#ef4444';
+                fill.style.filter = 'drop-shadow(0 0 6px rgba(239,68,68,0.5))';
+            } else if (usedPct >= 70) {
+                fill.style.stroke = '#f59e0b';
+                fill.style.filter = 'drop-shadow(0 0 6px rgba(245,158,11,0.5))';
+            }
+            setTimeout(() => { label.textContent = usedPct + '%'; }, 500);
+        }
+    });
+</script>
+{% endblock %}
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>priviX - Secure Vault</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script>
+        // Apply theme immediately to prevent flash
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <style>
+        /* ===== DARK THEME (Default) ===== */
+        :root, [data-theme="dark"] {
+            --primary-color: #00f5ff;
+            --primary-glow: rgba(0, 245, 255, 0.4);
+            --primary-gradient: linear-gradient(135deg, #00f5ff 0%, #0284c7 100%);
+            --secondary-gradient: linear-gradient(135deg, #8b5cf6 0%, #3b0764 100%);
+            --bg-color: #050a16;
+            --canvas-opacity: 1;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(0, 245, 255, 0.15);
+            --text-main: #f8fafc;
+            --text-muted: #8892a4;
+            --text-meta: #6c7a94;
+            --text-highlight: #00f5ff;
+            --accent-glow: 0 0 20px rgba(0, 245, 255, 0.2);
+            --table-hover: rgba(255, 255, 255, 0.05);
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --input-focus-bg: rgba(0, 0, 0, 0.5);
+            --nav-bg: rgba(10, 20, 40, 0.75);
+            --icon-bg-primary: rgba(0, 245, 255, 0.1);
+            --icon-bg-success: rgba(16, 185, 129, 0.1);
+            --icon-bg-warning: rgba(245, 158, 11, 0.1);
+            --btn-text: #050a16;
+            --orb-opacity: 0.1;
+            --toggle-bg: rgba(0,245,255,0.1);
+            --toggle-border: rgba(0,245,255,0.3);
+            --toggle-color: #00f5ff;
+        }
+        /* ===== LIGHT THEME ===== */
+        [data-theme="light"] {
+            --primary-color: #0284c7;
+            --primary-glow: rgba(2, 132, 199, 0.3);
+            --primary-gradient: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            --secondary-gradient: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            --bg-color: #f0f4f8;
+            --canvas-opacity: 0.3;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(2, 132, 199, 0.2);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --text-meta: #64748b;
+            --text-highlight: #0284c7;
+            --accent-glow: 0 0 20px rgba(2, 132, 199, 0.15);
+            --table-hover: rgba(0, 0, 0, 0.03);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-focus-bg: #ffffff;
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --icon-bg-primary: rgba(2, 132, 199, 0.08);
+            --icon-bg-success: rgba(16, 185, 129, 0.08);
+            --icon-bg-warning: rgba(245, 158, 11, 0.08);
+            --btn-text: #ffffff;
+            --orb-opacity: 0.18;
+            --toggle-bg: rgba(2,132,199,0.1);
+            --toggle-border: rgba(2,132,199,0.3);
+            --toggle-color: #0284c7;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.4s ease, color 0.3s ease;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+        }
+        /* Animated Background Orbs */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            animation: float 20s infinite ease-in-out alternate;
+            opacity: var(--orb-opacity);
+        }
+        .orb-1 { width: 400px; height: 400px; background: rgba(0, 245, 255, 1); top: -100px; left: -100px; animation-delay: 0s; }
+        .orb-2 { width: 500px; height: 500px; background: rgba(139, 92, 246, 1); bottom: -150px; right: -100px; animation-delay: -5s; }
+        .orb-3 { width: 300px; height: 300px; background: rgba(16, 185, 129, 1); top: 40%; left: 30%; animation-delay: -10s; }
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.05); }
+            100% { transform: translateY(30px) scale(0.95); }
+        }
+        /* Custom Navbar */
+        .navbar-custom {
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+            padding: 1rem 0;
+            z-index: 1030;
+        }
+        .navbar-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: #fff !important;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+        }
+        @keyframes shieldPulse {
+            0% { filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.4)); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 15px rgba(0, 245, 255, 0.8)); transform: scale(1.05); }
+            100% { filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.4)); transform: scale(1); }
+        }
+        .shield-icon {
+            color: var(--primary-color);
+            animation: shieldPulse 3s infinite;
+        }
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-muted) !important;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-main) !important;
+        }
+        
+        .avatar-circle {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: var(--icon-bg-primary);
+            border: 2px solid var(--primary-color);
+            color: var(--text-main);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-family: 'Space Grotesk', sans-serif;
+            box-shadow: 0 0 10px rgba(0,245,255,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .avatar-circle:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(0,245,255,0.6);
+        }
+        /* Glassmorphic Cards (SaaS Update) */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 28px;
+            overflow: hidden;
+        }
+        
+        .card-accent-border {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary-color);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+        .glass-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 40px rgba(0, 245, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        /* Buttons */
+        .btn-gradient {
+            background: var(--primary-gradient);
+            color: var(--btn-text) !important;
+            border: none;
+            border-radius: 12px;
+            padding: 0.8rem 1.8rem;
+            font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        .btn-gradient:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 245, 255, 0.6);
+        }
+        .btn-outline-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-outline-danger:hover {
+            background: #ef4444;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+        .btn-outline-custom {
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 12px;
+            font-weight: 500;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+        .btn-outline-custom:hover {
+            background: var(--primary-color);
+            color: var(--btn-text);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        /* Micro-Animations: Staggered Fade Up */
+        @keyframes fadeSlideUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .stagger-enter {
+            animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        /* Forms */
+        .form-control, .input-group-text {
+            background-color: var(--input-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            background-color: var(--input-focus-bg);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.2);
+            color: var(--text-main);
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-label { font-weight: 600; font-size: 0.9rem; letter-spacing: 0.5px; }
+        .main-content { margin-top: 7rem; flex: 1; z-index: 10; }
+        
+        /* Theme Toggle Pill */
+        .theme-toggle-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--toggle-bg);
+            border: 1px solid var(--toggle-border);
+            color: var(--toggle-color);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        .theme-toggle-pill:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: var(--btn-text);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+        /* Footer */
+        .footer-glow {
+            position: relative;
+            padding: 24px 0;
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: background-color 0.4s ease;
+        }
+        .footer-glow::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 10%; right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            opacity: 0.4;
+        }
+        /* ===== LIGHT THEME OVERRIDES ===== */
+        /* Fix navbar brand and text */
+        [data-theme="light"] .navbar-brand { color: #0f172a !important; }
+        [data-theme="light"] .navbar-brand span { color: var(--primary-color) !important; }
+        [data-theme="light"] .navbar-custom { box-shadow: 0 2px 20px rgba(0,0,0,0.08); border-bottom-color: rgba(2,132,199,0.2); }
+        /* Fix card backgrounds */
+        [data-theme="light"] .glass-card,
+        [data-theme="light"] .stat-card,
+        [data-theme="light"] .shared-list-item,
+        [data-theme="light"] .file-list-item {
+            background: rgba(255,255,255,0.9) !important;
+            border-color: rgba(2,132,199,0.18) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.07) !important;
+        }
+        [data-theme="light"] .glass-card:hover,
+        [data-theme="light"] .stat-card:hover,
+        [data-theme="light"] .file-list-item:hover,
+        [data-theme="light"] .shared-list-item:hover {
+            background: rgba(255,255,255,1) !important;
+            box-shadow: 0 8px 30px rgba(2,132,199,0.12) !important;
+        }
+        /* Fix all text colors */
+        [data-theme="light"] body,
+        [data-theme="light"] p,
+        [data-theme="light"] div,
+        [data-theme="light"] span:not(.badge):not(.status-pill):not(.status-dot) {
+            color: inherit;
+        }
+        [data-theme="light"] .stat-label,
+        [data-theme="light"] .stat-number,
+        [data-theme="light"] h1, [data-theme="light"] h2,
+        [data-theme="light"] h3, [data-theme="light"] h4,
+        [data-theme="light"] h5, [data-theme="light"] h6 {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .stat-sub,
+        [data-theme="light"] .stat-number.teal { color: #0284c7 !important; text-shadow: none !important; }
+        [data-theme="light"] .stat-number.green { color: #059669 !important; text-shadow: none !important; }
+        [data-theme="light"] .stat-icon-badge.teal {
+            background: rgba(2,132,199,0.12) !important;
+            box-shadow: 0 0 16px rgba(2,132,199,0.2) !important;
+            color: #0284c7 !important;
+        }
+        [data-theme="light"] .stat-icon-badge.green {
+            background: rgba(5,150,105,0.12) !important;
+            box-shadow: 0 0 16px rgba(5,150,105,0.2) !important;
+            color: #059669 !important;
+        }
+        [data-theme="light"] .stat-progress-fill.teal { background: linear-gradient(90deg, #0ea5e9, #0284c7) !important; box-shadow: none !important; }
+        [data-theme="light"] .stat-progress-fill.green { background: linear-gradient(90deg, #10b981, #059669) !important; box-shadow: none !important; }
+        /* Hero banner in light mode */
+        [data-theme="light"] .hero-banner {
+            background: linear-gradient(135deg, rgba(2,132,199,0.07) 0%, rgba(139,92,246,0.07) 100%) !important;
+            border-color: rgba(2,132,199,0.2) !important;
+        }
+        [data-theme="light"] .username-highlight {
+            background: linear-gradient(135deg, #0284c7, #7c3aed) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+        /* Activity feed */
+        [data-theme="light"] .activity-item { border-bottom-color: rgba(2,132,199,0.1) !important; }
+        /* File list items */
+        [data-theme="light"] .file-list-item::before {
+            background: linear-gradient(to bottom, #0284c7, #0ea5e9) !important;
+        }
+        [data-theme="light"] .shared-list-item::before {
+            background: linear-gradient(to bottom, #059669, #10b981) !important;
+        }
+        /* Inputs and forms */
+        [data-theme="light"] .form-control,
+        [data-theme="light"] .input-group-text {
+            background: rgba(255,255,255,0.95) !important;
+            border-color: rgba(2,132,199,0.25) !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .form-control::placeholder { color: #94a3b8 !important; }
+        [data-theme="light"] .form-control:focus {
+            border-color: #0284c7 !important;
+            box-shadow: 0 0 0 3px rgba(2,132,199,0.15) !important;
+        }
+        /* Search bar */
+        [data-theme="light"] .search-filter-bar {
+            background: rgba(255,255,255,0.9) !important;
+            border-color: rgba(2,132,199,0.18) !important;
+        }
+        [data-theme="light"] .search-filter-bar input { color: #0f172a !important; }
+        [data-theme="light"] .search-filter-bar select { color: #475569 !important; }
+        /* Upload drop zone */
+        [data-theme="light"] .page-drop-zone {
+            border-color: rgba(2,132,199,0.35) !important;
+            background: rgba(2,132,199,0.03) !important;
+        }
+        [data-theme="light"] .page-drop-zone:hover,
+        [data-theme="light"] .page-drop-zone.drag-over {
+            background: rgba(2,132,199,0.07) !important;
+            box-shadow: 0 0 20px rgba(2,132,199,0.12) !important;
+        }
+        /* Buttons */
+        [data-theme="light"] .btn-gradient { color: #ffffff !important; }
+        [data-theme="light"] .btn-outline-custom {
+            border-color: #0284c7 !important;
+            color: #0284c7 !important;
+        }
+        [data-theme="light"] .btn-outline-custom:hover {
+            background: #0284c7 !important;
+            color: #fff !important;
+        }
+        [data-theme="light"] .theme-toggle-pill:hover { color: #fff !important; }
+        /* Offcanvas */
+        [data-theme="light"] #offcanvasNavbar { background: rgba(255,255,255,0.97) !important; border-left-color: rgba(2,132,199,0.2) !important; }
+        [data-theme="light"] .nav-link { color: #475569 !important; }
+        [data-theme="light"] .nav-link:hover, [data-theme="light"] .nav-link.active { color: #0f172a !important; }
+        [data-theme="light"] #offcanvasCloseBtn { filter: none !important; }
+        /* Avatar */
+        [data-theme="light"] .avatar-circle {
+            background: rgba(2,132,199,0.1) !important;
+            border-color: #0284c7 !important;
+            color: #0284c7 !important;
+        }
+        /* Modals in light mode */
+        [data-theme="light"] .modal-content {
+            background: rgba(255,255,255,0.97) !important;
+            border-color: rgba(2,132,199,0.2) !important;
+        }
+        [data-theme="light"] .modal-content .btn-close {
+            filter: none !important;
+        }
+        [data-theme="light"] .upload-zone {
+            background: rgba(2,132,199,0.03) !important;
+            border-color: rgba(2,132,199,0.3) !important;
+        }
+        [data-theme="light"] .upload-zone:hover {
+            background: rgba(2,132,199,0.08) !important;
+        }
+        [data-theme="light"] .modal-title i,
+        [data-theme="light"] .upload-zone i {
+            color: #0284c7 !important;
+        }
+        [data-theme="light"] .modal-title,
+        [data-theme="light"] .upload-zone h5 {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .upload-zone p {
+            color: #475569 !important;
+        }
+        /* Donut chart in light mode */
+        [data-theme="light"] .donut-ring { stroke: rgba(0,0,0,0.06) !important; }
+        /* Owner avatar in shared files */
+        [data-theme="light"] .owner-avatar {
+            background: linear-gradient(135deg, rgba(2,132,199,0.15), rgba(139,92,246,0.15)) !important;
+            border-color: rgba(2,132,199,0.35) !important;
+            color: #0284c7 !important;
+        }
+        /* Action buttons in light mode */
+        [data-theme="light"] .action-btn-icon.download { border-color: rgba(2,132,199,0.4) !important; color: #0284c7 !important; background: rgba(2,132,199,0.07) !important; }
+        [data-theme="light"] .action-btn-icon.delete { border-color: rgba(239,68,68,0.4) !important; }
+        [data-theme="light"] .action-btn-icon.share { border-color: rgba(5,150,105,0.4) !important; }
+        [data-theme="light"] .action-btn-icon.preview { border-color: rgba(139,92,246,0.4) !important; }
+        [data-theme="light"] .action-btn-icon.remove { border-color: rgba(245,158,11,0.4) !important; }
+        [data-theme="light"] .action-btn-icon::after {
+            background: rgba(255,255,255,0.97) !important;
+            border-color: rgba(2,132,199,0.2) !important;
+            color: #0f172a !important;
+        }
+        /* Tag badges */
+        [data-theme="light"] .sf-icon-box {
+            background: rgba(2,132,199,0.1) !important;
+            color: #0284c7 !important;
+            box-shadow: none !important;
+        }
+        /* Footer */
+        [data-theme="light"] .footer-glow { background: rgba(255,255,255,0.9) !important; }
+        /* Alerts */
+        [data-theme="light"] .alert { color: #0f172a !important; }
+        /* Orbs in light mode — same floating effect as dark, just more saturated */
+        [data-theme="light"] .orb-1 { background: rgba(2,132,199,1) !important; }
+        [data-theme="light"] .orb-2 { background: rgba(139,92,246,1) !important; }
+        [data-theme="light"] .orb-3 { background: rgba(16,185,129,1) !important; }
+        /* Particle canvas — fully visible in light mode too */
+        [data-theme="light"] #particleCanvas { opacity: 0.55 !important; }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas" style="position: fixed; top: 0; left: 0; z-index: -4; pointer-events: none; opacity: 1; transition: opacity 0.5s ease;"></canvas>
+    
+    <!-- Background Animated Orbs -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+    <nav class="navbar navbar-custom fixed-top">
+        <div class="container stagger-enter">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fa-solid fa-shield-halved me-2 shield-icon"></i>privi<span style="color: var(--primary-color);">X</span>
+            </a>
+            
+            <div class="d-flex align-items-center gap-2">
+                <!-- Theme Toggle -->
+                <button class="theme-toggle-pill border-0" onclick="toggleTheme()" id="themeToggleBtn" title="Toggle Theme">
+                    <i class="fa-solid fa-moon" id="themeIconMobile"></i>
+                    <span id="themeLabel">Dark</span>
+                </button>
+                {% if session.get('user_id') %}
+                <div class="avatar-circle" title="{{ session.username }}">
+                    {{ session.username[0]|upper }}
+                </div>
+                {% endif %}
+                <button class="navbar-toggler border-0 ms-1" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+                    <i class="fa-solid fa-bars fs-4" style="color: var(--text-main);"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+            
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" style="background: var(--nav-bg); backdrop-filter: blur(20px); border-left: 1px solid var(--card-border); z-index: 1050;">
+        <div class="offcanvas-header border-bottom" style="border-color: var(--card-border) !important;">
+            <h5 class="offcanvas-title fw-bold" style="background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Navigation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" id="offcanvasCloseBtn"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                {% if session.get('user_id') %}
+                    <li class="nav-item mb-2">
+                        <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="fa-solid fa-chart-pie me-2"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link {% if request.path == '/my-files' %}active{% endif %}" href="{{ url_for('my_files') }}">
+                            <i class="fa-solid fa-folder-open me-2"></i> My Files
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link {% if request.path == '/shared-files' %}active{% endif %}" href="{{ url_for('shared_files') }}">
+                            <i class="fa-solid fa-users me-2"></i> Shared With Me
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="btn btn-outline-custom w-100 py-2 d-flex justify-content-center align-items-center" href="{{ url_for('logout') }}">
+                            <i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Logout
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{{ url_for('login') }}">Sign In</a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="btn btn-gradient w-100 py-2" href="{{ url_for('signup') }}">Sign Up</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <div class="container main-content pb-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="stagger-enter delay-1">
+                {% for category, message in messages %}
+                    {% set icon = 'fa-circle-check' if category == 'success' else ('fa-triangle-exclamation' if category == 'danger' else 'fa-circle-info') %}
+                    {% set accent = '#00f5ff' if category == 'info' else ('#10b981' if category == 'success' else ('#ef4444' if category == 'danger' else '#f59e0b')) %}
+                    <div class="alert alert-dismissible fade show mb-4" role="alert"
+                         style="background:rgba(255,255,255,0.03);border:1px solid {{ accent }}33;border-left:4px solid {{ accent }};border-radius:14px;color:#f8fafc;backdrop-filter:blur(10px);">
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid {{ icon }} fs-5 me-3" style="color:{{ accent }};"></i>
+                            <div style="font-weight:500;">{{ message }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" style="filter:invert(1);opacity:0.6;"></button>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+    <!-- Global Footer -->
+    <footer class="mt-auto footer-glow">
+        <div class="container">
+            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                <!-- Brand -->
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-shield-halved shield-icon" style="font-size:1.1rem;"></i>
+                    <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--text-main);font-size:1.05rem;">privi<span style="color:var(--primary-color);">X</span></span>
+                    <span style="color:var(--text-muted);font-size:0.8rem;">&copy; <script>document.write(new Date().getFullYear())</script></span>
+                </div>
+                <!-- Tagline -->
+                <span style="color:var(--text-muted);font-size:0.82rem;letter-spacing:0.3px;">
+                    <i class="fa-solid fa-lock me-1" style="color:var(--primary-color);font-size:0.75rem;"></i>
+                    End-to-end encrypted &bull; Secure Vault Protocol
+                </span>
+                <!-- Social Links -->
+                <div class="d-flex gap-3 align-items-center">
+                    <a href="#" style="color:var(--text-muted);font-size:1.1rem;transition:color 0.3s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'" title="GitHub">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    <a href="#" style="color:var(--text-muted);font-size:1.1rem;transition:color 0.3s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'" title="Twitter">
+                        <i class="fa-brands fa-twitter"></i>
+                    </a>
+                    <span style="width:1px;height:16px;background:var(--card-border);display:inline-block;"></span>
+                    <span style="color:var(--text-muted);font-size:0.75rem;">v2.0</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    {% block modals %}{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Particle Network Animation
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particlesArray = [];
+        
+        // Define color based on theme
+        function getRGBArray() {
+            return [0, 245, 255]; // Enforce teal for the network glow
+        }
+        class Particle {
+            constructor(x, y, directionX, directionY, size) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+            }
+            draw(rgb) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.8)`;
+                ctx.fill();
+            }
+            update(rgb) {
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw(rgb);
+            }
+        }
+        function init() {
+            particlesArray = [];
+            // Dynamically calculate number based on screen size
+            let numberOfParticles = (canvas.height * canvas.width) / 18000;
+            if(numberOfParticles > 90) numberOfParticles = 90; // Cap
+            
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 0.5;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 0.4) - 0.2; // Slower floating
+                let directionY = (Math.random() * 0.4) - 0.2; // Slower floating
+                particlesArray.push(new Particle(x, y, directionX, directionY, size));
+            }
+        }
+        function connect(rgb) {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                    + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    if (distance < (canvas.width/9) * (canvas.height/9)) {
+                        opacityValue = 1 - (distance / 20000);
+                        if (opacityValue > 0) {
+                            ctx.strokeStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacityValue * 0.4})`;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                            ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+        }
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            
+            const currentRGB = getRGBArray();
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update(currentRGB);
+            }
+            connect(currentRGB);
+        }
+        window.addEventListener('resize', function() {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            init();
+        });
+        init();
+        animate();
+        // ===== THEME SYSTEM =====
+        function applyThemeUI(theme) {
+            const icon = document.getElementById('themeIconMobile');
+            const label = document.getElementById('themeLabel');
+            const closeBtn = document.getElementById('offcanvasCloseBtn');
+            const particleCanvas = document.getElementById('particleCanvas');
+            if (theme === 'dark') {
+                if (icon) icon.className = 'fa-solid fa-sun';
+                if (label) label.textContent = 'Dark';
+                if (closeBtn) closeBtn.style.filter = 'invert(1) brightness(2)';
+                if (particleCanvas) particleCanvas.style.opacity = '1';
+            } else {
+                if (icon) icon.className = 'fa-solid fa-moon';
+                if (label) label.textContent = 'Light';
+                if (closeBtn) closeBtn.style.filter = 'none';
+                if (particleCanvas) particleCanvas.style.opacity = '0.25';
+            }
+        }
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('privix_theme', next);
+            applyThemeUI(next);
+        }
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('privix_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            applyThemeUI(saved);
+            // Auto-dismiss flash alerts after 4s
+            setTimeout(() => {
+                document.querySelectorAll('.alert').forEach(alert => {
+                    try { new bootstrap.Alert(alert).close(); } catch(e) {}
+                });
+            }, 4000);
+        });
+    </script>
+</body>
+</html>

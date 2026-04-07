@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+/* Shared Files Specific Styles */
+.shared-list-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,245,255,0.12);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.shared-list-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #10b981, #065f46);
+    border-radius: 3px 0 0 3px;
+    box-shadow: 0 0 8px rgba(16,185,129,0.4);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.shared-list-item:hover {
+    background: rgba(16,185,129,0.04);
+    border-color: rgba(16,185,129,0.25);
+    transform: translateX(4px);
+}
+.shared-list-item:hover::before { opacity: 1; }
+
+/* Owner Avatar */
+.owner-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0,245,255,0.2), rgba(139,92,246,0.2));
+    border: 1.5px solid rgba(0,245,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #00f5ff;
+    flex-shrink: 0;
+    box-shadow: 0 0 10px rgba(0,245,255,0.15);
+}
+
+/* Status Pills */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.status-pill.accessible {
+    background: rgba(0,245,255,0.1);
+    color: #00f5ff;
+    border: 1px solid rgba(0,245,255,0.25);
+}
+.status-pill.accessible::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #00f5ff;
+    box-shadow: 0 0 8px #00f5ff;
+    animation: pulseDot 2s infinite;
+}
+.status-pill.expired {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.25);
+}
+.status-pill.expired::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #ef4444;
+}
+.status-pill.pending {
+    background: rgba(245,158,11,0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245,158,11,0.25);
+}
+.status-pill.pending::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #f59e0b;
+}
+
+@keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 4px currentColor; }
+    50%       { box-shadow: 0 0 12px currentColor; }
+}
+
+/* File icon boxes */
+.sf-icon-box {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    background: rgba(0,245,255,0.08);
+    color: #00f5ff;
+    box-shadow: 0 0 10px rgba(0,245,255,0.1);
+}
+
+/* Action Buttons */
+.action-btn-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    border: 1px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    text-decoration: none;
+}
+.action-btn-icon.download { border-color: rgba(0,245,255,0.35); color: #00f5ff; background: rgba(0,245,255,0.07); }
+.action-btn-icon.download:hover { background: rgba(0,245,255,0.18); box-shadow: 0 0 12px rgba(0,245,255,0.3); color: #00f5ff; }
+.action-btn-icon.preview { border-color: rgba(139,92,246,0.35); color: #8b5cf6; background: rgba(139,92,246,0.07); }
+.action-btn-icon.preview:hover { background: rgba(139,92,246,0.18); box-shadow: 0 0 12px rgba(139,92,246,0.3); }
+.action-btn-icon.remove { border-color: rgba(245,158,11,0.35); color: #f59e0b; background: rgba(245,158,11,0.07); }
+.action-btn-icon.remove:hover { background: rgba(245,158,11,0.18); box-shadow: 0 0 12px rgba(245,158,11,0.3); }
+
+.action-btn-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,20,40,0.95);
+    border: 1px solid rgba(0,245,255,0.2);
+    color: #f8fafc;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.action-btn-icon:hover::after { opacity: 1; }
+</style>
+
+<!-- Page Header -->
+<div class="mb-3 stagger-enter">
+    <a href="{{ url_for('dashboard') }}" class="text-decoration-none" style="color:var(--text-muted);font-weight:600;transition:color 0.3s;"
+       onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Overview
+    </a>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 stagger-enter delay-1">
+    <div>
+        <h2 class="fw-bold mb-1" style="color:var(--text-main);">
+            <i class="fa-solid fa-users me-2" style="color:#10b981;"></i>Shared With Me
+        </h2>
+        <p style="color:var(--text-muted);margin-bottom:0;font-size:0.9rem;">Files shared with you by other users — decrypted on download.</p>
+    </div>
+    <span class="badge mt-3 mt-md-0" style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.2);font-size:0.85rem;padding:8px 16px;border-radius:10px;">
+        <i class="fa-solid fa-file-lines me-1"></i>{{ shared_files|length }} files
+    </span>
+</div>
+
+<!-- File List -->
+<div class="stagger-enter delay-2">
+    {% if shared_files %}
+        {% for file in shared_files %}
+        {% set ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'other' %}
+        {% set icon = 'fa-file-pdf' if ext == 'pdf' else ('fa-file-image' if ext in ['png','jpg','jpeg','gif','webp','svg'] else ('fa-file-lines' if ext in ['doc','docx','txt','xlsx','csv'] else ('fa-file-zipper' if ext in ['zip','rar','7z'] else ('fa-file-powerpoint' if ext in ['ppt','pptx'] else 'fa-file')))) %}
+
+        <div class="shared-list-item">
+            <!-- File Icon -->
+            <div class="sf-icon-box">
+                <i class="fa-regular {{ icon }}"></i>
+            </div>
+
+            <!-- File Info -->
+            <div class="flex-grow-1 min-width-0">
+                <div style="font-weight:600;font-size:0.95rem;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ file.filename }}
+                </div>
+                <div style="font-size:0.78rem;color:var(--text-meta);margin-top:3px;">
+                    <span style="text-transform:uppercase;letter-spacing:0.5px;">{{ ext }}</span>
+                    <span class="mx-2" style="color:var(--card-border);">•</span>
+                    Shared with you
+                    <span class="mx-2" style="color:var(--card-border);">•</span>
+                    <span style="letter-spacing:0.3px;">{{ file.created_at | format_ist_date }}</span>
+                </div>
+            </div>
+
+            <!-- Owner -->
+            <div class="d-none d-md-flex align-items-center gap-2" style="min-width:120px;">
+                <div class="owner-avatar" title="{{ file.owner_name }}">
+                    {{ file.owner_name[0]|upper }}
+                </div>
+                <div>
+                    <div style="font-size:0.82rem;font-weight:600;color:var(--text-main);">{{ file.owner_name }}</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);">Owner</div>
+                </div>
+            </div>
+
+            <!-- Status Pill -->
+            <div class="d-none d-lg-block">
+                <span class="status-pill accessible">Accessible</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 align-items-center flex-shrink-0">
+                <a class="action-btn-icon preview" data-tooltip="Preview" href="#" onclick="alert('Preview not yet available for encrypted files.');return false;">
+                    <i class="fa-solid fa-eye"></i>
+                </a>
+                <a href="{{ url_for('download_shared_file', shared_file_id=file.id) }}" class="action-btn-icon download" data-tooltip="Download & Decrypt">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                </a>
+                <button class="action-btn-icon remove" data-tooltip="Remove Access"
+                    data-bs-toggle="modal" data-bs-target="#unshareModal{{ file.id }}">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div style="width:100px;height:100px;background:rgba(16,185,129,0.06);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;border:1px solid rgba(16,185,129,0.15);">
+                <i class="fa-solid fa-satellite" style="font-size:2.5rem;color:#10b981;filter:drop-shadow(0 0 10px rgba(16,185,129,0.4));"></i>
+            </div>
+            <h3 class="fw-bold mb-2" style="color:#f8fafc;">No Shared Files Yet</h3>
+            <p style="color:#8892a4;font-size:1rem;">Files that other users share with you will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block modals %}
+{% for file in shared_files %}
+<div class="modal fade" id="unshareModal{{ file.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:rgba(10,20,40,0.95);backdrop-filter:blur(20px);border:1px solid rgba(245,158,11,0.2);border-radius:24px;">
+      <div class="modal-body p-5 text-center">
+        <div style="width:70px;height:70px;background:rgba(245,158,11,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;border:1px solid rgba(245,158,11,0.25);">
+            <i class="fa-solid fa-link-slash" style="font-size:1.8rem;color:#f59e0b;"></i>
+        </div>
+        <h4 class="fw-bold mb-2" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">Remove Access?</h4>
+        <p style="color:#8892a4;">Are you sure you want to remove <strong style="color:#f8fafc;">{{ file.filename }}</strong> from your view?<br>You will lose access until it's shared again.</p>
+        <div class="d-flex justify-content-center gap-3 mt-4">
+          <button class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+          <form method="POST" action="{{ url_for('unshare_file', shared_file_id=file.id) }}">
+            <button type="submit" class="btn" style="background:#f59e0b;color:#fff;border-radius:12px;border:none;padding:0.7rem 1.8rem;font-weight:600;">Yes, Remove</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>priviX - Secure Vault</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script>
+        // Apply theme immediately to prevent flash
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+
+    <style>
+        /* ===== DARK THEME (Default) ===== */
+        :root, [data-theme="dark"] {
+            --primary-color: #00f5ff;
+            --primary-glow: rgba(0, 245, 255, 0.4);
+            --primary-gradient: linear-gradient(135deg, #00f5ff 0%, #0284c7 100%);
+            --secondary-gradient: linear-gradient(135deg, #8b5cf6 0%, #3b0764 100%);
+            --bg-color: #050a16;
+            --canvas-opacity: 1;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(0, 245, 255, 0.15);
+            --text-main: #f8fafc;
+            --text-muted: #8892a4;
+            --text-meta: #6c7a94;
+            --text-highlight: #00f5ff;
+            --accent-glow: 0 0 20px rgba(0, 245, 255, 0.2);
+            --table-hover: rgba(255, 255, 255, 0.05);
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --input-focus-bg: rgba(0, 0, 0, 0.5);
+            --nav-bg: rgba(10, 20, 40, 0.75);
+            --icon-bg-primary: rgba(0, 245, 255, 0.1);
+            --icon-bg-success: rgba(16, 185, 129, 0.1);
+            --icon-bg-warning: rgba(245, 158, 11, 0.1);
+            --btn-text: #050a16;
+            --orb-opacity: 0.1;
+            --toggle-bg: rgba(0,245,255,0.1);
+            --toggle-border: rgba(0,245,255,0.3);
+            --toggle-color: #00f5ff;
+        }
+
+        /* ===== LIGHT THEME ===== */
+        [data-theme="light"] {
+            --primary-color: #0284c7;
+            --primary-glow: rgba(2, 132, 199, 0.3);
+            --primary-gradient: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            --secondary-gradient: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            --bg-color: #f0f4f8;
+            --canvas-opacity: 0.3;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(2, 132, 199, 0.2);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --text-meta: #64748b;
+            --text-highlight: #0284c7;
+            --accent-glow: 0 0 20px rgba(2, 132, 199, 0.15);
+            --table-hover: rgba(0, 0, 0, 0.03);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-focus-bg: #ffffff;
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --icon-bg-primary: rgba(2, 132, 199, 0.08);
+            --icon-bg-success: rgba(16, 185, 129, 0.08);
+            --icon-bg-warning: rgba(245, 158, 11, 0.08);
+            --btn-text: #ffffff;
+            --orb-opacity: 0.18;
+            --toggle-bg: rgba(2,132,199,0.1);
+            --toggle-border: rgba(2,132,199,0.3);
+            --toggle-color: #0284c7;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.4s ease, color 0.3s ease;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Animated Background Orbs */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            animation: float 20s infinite ease-in-out alternate;
+            opacity: var(--orb-opacity);
+        }
+        .orb-1 { width: 400px; height: 400px; background: rgba(0, 245, 255, 1); top: -100px; left: -100px; animation-delay: 0s; }
+        .orb-2 { width: 500px; height: 500px; background: rgba(139, 92, 246, 1); bottom: -150px; right: -100px; animation-delay: -5s; }
+        .orb-3 { width: 300px; height: 300px; background: rgba(16, 185, 129, 1); top: 40%; left: 30%; animation-delay: -10s; }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.05); }
+            100% { transform: translateY(30px) scale(0.95); }
+        }
+
+        /* Custom Navbar */
+        .navbar-custom {
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+            padding: 1rem 0;
+            z-index: 1030;
+        }
+        .navbar-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: #fff !important;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+        }
+        @keyframes shieldPulse {
+            0% { filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.4)); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 15px rgba(0, 245, 255, 0.8)); transform: scale(1.05); }
+            100% { filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.4)); transform: scale(1); }
+        }
+        .shield-icon {
+            color: var(--primary-color);
+            animation: shieldPulse 3s infinite;
+        }
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-muted) !important;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-main) !important;
+        }
+        
+        .avatar-circle {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: var(--icon-bg-primary);
+            border: 2px solid var(--primary-color);
+            color: var(--text-main);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-family: 'Space Grotesk', sans-serif;
+            box-shadow: 0 0 10px rgba(0,245,255,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .avatar-circle:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(0,245,255,0.6);
+        }
+
+        /* Glassmorphic Cards (SaaS Update) */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 28px;
+            overflow: hidden;
+        }
+        
+        .card-accent-border {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary-color);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 40px rgba(0, 245, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Buttons */
+        .btn-gradient {
+            background: var(--primary-gradient);
+            color: var(--btn-text) !important;
+            border: none;
+            border-radius: 12px;
+            padding: 0.8rem 1.8rem;
+            font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        .btn-gradient:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 245, 255, 0.6);
+        }
+
+        .btn-outline-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-outline-danger:hover {
+            background: #ef4444;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+
+        .btn-outline-custom {
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 12px;
+            font-weight: 500;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+        .btn-outline-custom:hover {
+            background: var(--primary-color);
+            color: var(--btn-text);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        /* Micro-Animations: Staggered Fade Up */
+        @keyframes fadeSlideUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .stagger-enter {
+            animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        /* Forms */
+        .form-control, .input-group-text {
+            background-color: var(--input-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            background-color: var(--input-focus-bg);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.2);
+            color: var(--text-main);
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-label { font-weight: 600; font-size: 0.9rem; letter-spacing: 0.5px; }
+
+        .main-content { margin-top: 7rem; flex: 1; z-index: 10; }
+        
+        /* Theme Toggle Pill */
+        .theme-toggle-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--toggle-bg);
+            border: 1px solid var(--toggle-border);
+            color: var(--toggle-color);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        .theme-toggle-pill:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: var(--btn-text);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        /* Footer */
+        .footer-glow {
+            position: relative;
+            padding: 24px 0;
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: background-color 0.4s ease;
+        }
+        .footer-glow::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 10%; right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            opacity: 0.4;
+        }
+
+        /* Google Button Styling */
+        .btn-google {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main) !important;
+            border-radius: 12px;
+            padding: 0.8rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-google:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.5rem 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .auth-divider::before, .auth-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .auth-divider:not(:empty)::before { margin-right: .75em; }
+        .auth-divider:not(:empty)::after { margin-left: .75em; }
+
+        /* ===== LIGHT THEME OVERRIDES ===== */
+        /* Fix navbar brand and text */
+        [data-theme="light"] .navbar-brand { color: #0f172a !important; }
+        [data-theme="light"] .navbar-brand span { color: var(--primary-color) !important; }
+        [data-theme="light"] .navbar-custom { box-shadow: 0 2px 20px rgba(0,0,0,0.08); border-bottom-color: rgba(2,132,199,0.2); }
+
+        /* Fix card backgrounds */
+        [data-theme="light"] .glass-card,
+        [data-theme="light"] .stat-card,
+        [data-theme="light"] .shared-list-item,
+        [data-theme="light"] .file-list-item {
+            background: rgba(255,255,255,0.9) !important;
+            border-color: rgba(2,132,199,0.18) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.07) !important;
+        }
+        [data-theme="light"] .glass-card:hover,
+        [data-theme="light"] .stat-card:hover,
+        [data-theme="light"] .file-list-item:hover,
+        [data-theme="light"] .shared-list-item:hover {
+            background: rgba(255,255,255,1) !important;
+            box-shadow: 0 8px 30px rgba(2,132,199,0.12) !important;
+        }
+
+        /* Fix all text colors */
+        [data-theme="light"] body,
+        [data-theme="light"] p,
+        [data-theme="light"] div,
+        [data-theme="light"] span:not(.badge):not(.status-pill):not(.status-dot) {
+            color: inherit;
+        }
+        [data-theme="light"] .stat-label,
+        [data-theme="light"] .stat-number,
+        [data-theme="light"] h1, [data-theme="light"] h2,
+        [data-theme="light"] h3, [data-theme="light"] h4,
+        [data-theme="light"] h5, [data-theme="light"] h6 {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .stat-sub,
+        [data-theme="light"] .stat-number.teal { color: #0284c7 !important; text-shadow: none !important; }
+        [data-theme="light"] .stat-number.green { color: #059669 !important; text-shadow: none !important; }
+        [data-theme="light"] .stat-icon-badge.teal {
+            background: rgba(2,132,199,0.12) !important;
+            box-shadow: 0 0 16px rgba(2,132,199,0.2) !important;
+            color: #0284c7 !important;
+        }
+        [data-theme="light"] .stat-icon-badge.green {
+            background: rgba(5,150,105,0.12) !important;
+            box-shadow: 0 0 16px rgba(5,150,105,0.2) !important;
+            color: #059669 !important;
+        }
+        [data-theme="light"] .stat-progress-fill.teal { background: linear-gradient(90deg, #0ea5e9, #0284c7) !important; box-shadow: none !important; }
+        [data-theme="light"] .stat-progress-fill.green { background: linear-gradient(90deg, #10b981, #059669) !important; box-shadow: none !important; }
+
+        /* Hero banner in light mode */
+        [data-theme="light"] .hero-banner {
+            background: linear-gradient(135deg, rgba(2,132,199,0.07) 0%, rgba(139,92,246,0.07) 100%) !important;
+            border-color: rgba(2,132,199,0.2) !important;
+        }
+        [data-theme="light"] .username-highlight {
+            background: linear-gradient(135deg, #0284c7, #7c3aed) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+
+        /* Activity feed */
+        [data-theme="light"] .activity-item { border-bottom-color: rgba(2,132,199,0.1) !important; }
+
+        /* File list items */
+        [data-theme="light"] .file-list-item::before {
+            background: linear-gradient(to bottom, #0284c7, #0ea5e9) !important;
+        }
+        [data-theme="light"] .shared-list-item::before {
+            background: linear-gradient(to bottom, #059669, #10b981) !important;
+        }
+
+        /* Inputs and forms */
+        [data-theme="light"] .form-control,
+        [data-theme="light"] .input-group-text {
+            background: rgba(255,255,255,0.95) !important;
+            border-color: rgba(2,132,199,0.25) !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .form-control::placeholder { color: #94a3b8 !important; }
+        [data-theme="light"] .form-control:focus {
+            border-color: #0284c7 !important;
+            box-shadow: 0 0 0 3px rgba(2,132,199,0.15) !important;
+        }
+
+        /* Search bar */
+        [data-theme="light"] .search-filter-bar {
+            background: rgba(255,255,255,0.9) !important;
+            border-color: rgba(2,132,199,0.18) !important;
+        }
+        [data-theme="light"] .search-filter-bar input { color: #0f172a !important; }
+        [data-theme="light"] .search-filter-bar select { color: #475569 !important; }
+
+        /* Upload drop zone */
+        [data-theme="light"] .page-drop-zone {
+            border-color: rgba(2,132,199,0.35) !important;
+            background: rgba(2,132,199,0.03) !important;
+        }
+        [data-theme="light"] .page-drop-zone:hover,
+        [data-theme="light"] .page-drop-zone.drag-over {
+            background: rgba(2,132,199,0.07) !important;
+            box-shadow: 0 0 20px rgba(2,132,199,0.12) !important;
+        }
+
+        /* Buttons */
+        [data-theme="light"] .btn-gradient { color: #ffffff !important; }
+        [data-theme="light"] .btn-outline-custom {
+            border-color: #0284c7 !important;
+            color: #0284c7 !important;
+        }
+        [data-theme="light"] .btn-outline-custom:hover {
+            background: #0284c7 !important;
+            color: #fff !important;
+        }
+        [data-theme="light"] .theme-toggle-pill:hover { color: #fff !important; }
+
+        /* Offcanvas */
+        [data-theme="light"] #offcanvasNavbar { background: rgba(255,255,255,0.97) !important; border-left-color: rgba(2,132,199,0.2) !important; }
+        [data-theme="light"] .nav-link { color: #475569 !important; }
+        [data-theme="light"] .nav-link:hover, [data-theme="light"] .nav-link.active { color: #0f172a !important; }
+        [data-theme="light"] #offcanvasCloseBtn { filter: none !important; }
+
+        /* Avatar */
+        [data-theme="light"] .avatar-circle {
+            background: rgba(2,132,199,0.1) !important;
+            border-color: #0284c7 !important;
+            color: #0284c7 !important;
+        }
+
+        /* Modals in light mode */
+        [data-theme="light"] .modal-content {
+            background: rgba(255,255,255,0.97) !important;
+            border-color: rgba(2,132,199,0.2) !important;
+        }
+        [data-theme="light"] .modal-content .btn-close {
+            filter: none !important;
+        }
+        [data-theme="light"] .upload-zone {
+            background: rgba(2,132,199,0.03) !important;
+            border-color: rgba(2,132,199,0.3) !important;
+        }
+        [data-theme="light"] .upload-zone:hover {
+            background: rgba(2,132,199,0.08) !important;
+        }
+        [data-theme="light"] .modal-title i,
+        [data-theme="light"] .upload-zone i {
+            color: #0284c7 !important;
+        }
+        [data-theme="light"] .modal-title,
+        [data-theme="light"] .upload-zone h5 {
+            color: #0f172a !important;
+        }
+        [data-theme="light"] .upload-zone p {
+            color: #475569 !important;
+        }
+
+        /* Donut chart in light mode */
+        [data-theme="light"] .donut-ring { stroke: rgba(0,0,0,0.06) !important; }
+
+        /* Owner avatar in shared files */
+        [data-theme="light"] .owner-avatar {
+            background: linear-gradient(135deg, rgba(2,132,199,0.15), rgba(139,92,246,0.15)) !important;
+            border-color: rgba(2,132,199,0.35) !important;
+            color: #0284c7 !important;
+        }
+
+        /* Action buttons in light mode */
+        [data-theme="light"] .action-btn-icon.download { border-color: rgba(2,132,199,0.4) !important; color: #0284c7 !important; background: rgba(2,132,199,0.07) !important; }
+        [data-theme="light"] .action-btn-icon.delete { border-color: rgba(239,68,68,0.4) !important; }
+        [data-theme="light"] .action-btn-icon.share { border-color: rgba(5,150,105,0.4) !important; }
+        [data-theme="light"] .action-btn-icon.preview { border-color: rgba(139,92,246,0.4) !important; }
+        [data-theme="light"] .action-btn-icon.remove { border-color: rgba(245,158,11,0.4) !important; }
+        [data-theme="light"] .action-btn-icon::after {
+            background: rgba(255,255,255,0.97) !important;
+            border-color: rgba(2,132,199,0.2) !important;
+            color: #0f172a !important;
+        }
+
+        /* Tag badges */
+        [data-theme="light"] .sf-icon-box {
+            background: rgba(2,132,199,0.1) !important;
+            color: #0284c7 !important;
+            box-shadow: none !important;
+        }
+
+        /* Footer */
+        [data-theme="light"] .footer-glow { background: rgba(255,255,255,0.9) !important; }
+
+        /* Alerts */
+        [data-theme="light"] .alert { color: #0f172a !important; }
+
+        /* Orbs in light mode — same floating effect as dark, just more saturated */
+        [data-theme="light"] .orb-1 { background: rgba(2,132,199,1) !important; }
+        [data-theme="light"] .orb-2 { background: rgba(139,92,246,1) !important; }
+        [data-theme="light"] .orb-3 { background: rgba(16,185,129,1) !important; }
+
+        /* Particle canvas — fully visible in light mode too */
+        [data-theme="light"] #particleCanvas { opacity: 0.55 !important; }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas" style="position: fixed; top: 0; left: 0; z-index: -4; pointer-events: none; opacity: 1; transition: opacity 0.5s ease;"></canvas>
+    
+    <!-- Background Animated Orbs -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <nav class="navbar navbar-custom fixed-top">
+        <div class="container stagger-enter">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fa-solid fa-shield-halved me-2 shield-icon"></i>privi<span style="color: var(--primary-color);">X</span>
+            </a>
+            
+            <div class="d-flex align-items-center gap-2">
+                <!-- Theme Toggle -->
+                <button class="theme-toggle-pill border-0" onclick="toggleTheme()" id="themeToggleBtn" title="Toggle Theme">
+                    <i class="fa-solid fa-moon" id="themeIconMobile"></i>
+                    <span id="themeLabel">Dark</span>
+                </button>
+
+                {% if session.get('user_id') %}
+                <div class="avatar-circle" title="{{ session.username }}">
+                    {{ session.username[0]|upper }}
+                </div>
+                {% endif %}
+                <button class="navbar-toggler border-0 ms-1" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+                    <i class="fa-solid fa-bars fs-4" style="color: var(--text-main);"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+            
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" style="background: var(--nav-bg); backdrop-filter: blur(20px); border-left: 1px solid var(--card-border); z-index: 1050;">
+        <div class="offcanvas-header border-bottom" style="border-color: var(--card-border) !important;">
+            <h5 class="offcanvas-title fw-bold" style="background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Navigation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" id="offcanvasCloseBtn"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                {% if session.get('user_id') %}
+                    <li class="nav-item mb-2">
+                        <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="fa-solid fa-chart-pie me-2"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link {% if request.path == '/my-files' %}active{% endif %}" href="{{ url_for('my_files') }}">
+                            <i class="fa-solid fa-folder-open me-2"></i> My Files
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link {% if request.path == '/shared-files' %}active{% endif %}" href="{{ url_for('shared_files') }}">
+                            <i class="fa-solid fa-users me-2"></i> Shared With Me
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="btn btn-outline-custom w-100 py-2 d-flex justify-content-center align-items-center" href="{{ url_for('logout') }}">
+                            <i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Logout
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{{ url_for('login') }}">Sign In</a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="btn btn-gradient w-100 py-2" href="{{ url_for('signup') }}">Sign Up</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="container main-content pb-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="stagger-enter delay-1">
+                {% for category, message in messages %}
+                    {% set icon = 'fa-circle-check' if category == 'success' else ('fa-triangle-exclamation' if category == 'danger' else 'fa-circle-info') %}
+                    {% set accent = '#00f5ff' if category == 'info' else ('#10b981' if category == 'success' else ('#ef4444' if category == 'danger' else '#f59e0b')) %}
+                    <div class="alert alert-dismissible fade show mb-4" role="alert"
+                         style="background:rgba(255,255,255,0.03);border:1px solid {{ accent }}33;border-left:4px solid {{ accent }};border-radius:14px;color:#f8fafc;backdrop-filter:blur(10px);">
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid {{ icon }} fs-5 me-3" style="color:{{ accent }};"></i>
+                            <div style="font-weight:500;">{{ message }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" style="filter:invert(1);opacity:0.6;"></button>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Global Footer -->
+    <footer class="mt-auto footer-glow">
+        <div class="container">
+            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                <!-- Brand -->
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-shield-halved shield-icon" style="font-size:1.1rem;"></i>
+                    <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--text-main);font-size:1.05rem;">privi<span style="color:var(--primary-color);">X</span></span>
+                    <span style="color:var(--text-muted);font-size:0.8rem;">&copy; <script>document.write(new Date().getFullYear())</script></span>
+                </div>
+
+                <!-- Tagline -->
+                <span style="color:var(--text-muted);font-size:0.82rem;letter-spacing:0.3px;">
+                    <i class="fa-solid fa-lock me-1" style="color:var(--primary-color);font-size:0.75rem;"></i>
+                    End-to-end encrypted &bull; Secure Vault Protocol
+                </span>
+
+                <!-- Social Links -->
+                <div class="d-flex gap-3 align-items-center">
+                    <a href="#" style="color:var(--text-muted);font-size:1.1rem;transition:color 0.3s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'" title="GitHub">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    <a href="#" style="color:var(--text-muted);font-size:1.1rem;transition:color 0.3s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'" title="Twitter">
+                        <i class="fa-brands fa-twitter"></i>
+                    </a>
+                    <span style="width:1px;height:16px;background:var(--card-border);display:inline-block;"></span>
+                    <span style="color:var(--text-muted);font-size:0.75rem;">v2.0</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    {% block modals %}{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Particle Network Animation
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray = [];
+        
+        // Define color based on theme
+        function getRGBArray() {
+            return [0, 245, 255]; // Enforce teal for the network glow
+        }
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+            }
+            draw(rgb) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.8)`;
+                ctx.fill();
+            }
+            update(rgb) {
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw(rgb);
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            // Dynamically calculate number based on screen size
+            let numberOfParticles = (canvas.height * canvas.width) / 18000;
+            if(numberOfParticles > 90) numberOfParticles = 90; // Cap
+            
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 0.5;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 0.4) - 0.2; // Slower floating
+                let directionY = (Math.random() * 0.4) - 0.2; // Slower floating
+                particlesArray.push(new Particle(x, y, directionX, directionY, size));
+            }
+        }
+
+        function connect(rgb) {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                    + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    if (distance < (canvas.width/9) * (canvas.height/9)) {
+                        opacityValue = 1 - (distance / 20000);
+                        if (opacityValue > 0) {
+                            ctx.strokeStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacityValue * 0.4})`;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                            ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            
+            const currentRGB = getRGBArray();
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update(currentRGB);
+            }
+            connect(currentRGB);
+        }
+
+        window.addEventListener('resize', function() {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            init();
+        });
+
+        init();
+        animate();
+
+        // ===== THEME SYSTEM =====
+        function applyThemeUI(theme) {
+            const icon = document.getElementById('themeIconMobile');
+            const label = document.getElementById('themeLabel');
+            const closeBtn = document.getElementById('offcanvasCloseBtn');
+            const particleCanvas = document.getElementById('particleCanvas');
+
+            if (theme === 'dark') {
+                if (icon) icon.className = 'fa-solid fa-sun';
+                if (label) label.textContent = 'Dark';
+                if (closeBtn) closeBtn.style.filter = 'invert(1) brightness(2)';
+                if (particleCanvas) particleCanvas.style.opacity = '1';
+            } else {
+                if (icon) icon.className = 'fa-solid fa-moon';
+                if (label) label.textContent = 'Light';
+                if (closeBtn) closeBtn.style.filter = 'none';
+                if (particleCanvas) particleCanvas.style.opacity = '0.25';
+            }
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('privix_theme', next);
+            applyThemeUI(next);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('privix_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            applyThemeUI(saved);
+
+            // Auto-dismiss flash alerts after 4s
+            setTimeout(() => {
+                document.querySelectorAll('.alert').forEach(alert => {
+                    try { new bootstrap.Alert(alert).close(); } catch(e) {}
+                });
+            }, 4000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-8 col-lg-5 animate-enter delay-1">
+        <div class="glass-card p-5" style="box-shadow: 0 25px 50px -12px var(--icon-bg-secondary);">
+            <div class="text-center mb-5">
+                <div class="d-inline-flex justify-content-center align-items-center rounded-circle border p-4 mb-4" style="background: var(--input-bg); border-color: var(--card-border) !important; box-shadow: 0 0 30px var(--icon-bg-secondary);">
+                    <i class="fa-solid fa-user-plus" style="font-size: 2.5rem; background: var(--secondary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                </div>
+                <h2 class="fw-bold mb-2" style="font-size:2.2rem;letter-spacing:-1px;color:var(--text-main);">Create Account</h2>
+                <p style="color:var(--text-muted);margin-bottom:0;">Join priviX and secure your files.</p>
+            </div>
+            
+            <form action="{{ url_for('signup') }}" method="POST">
+                <div class="mb-4">
+                    <label for="username" class="form-label text-uppercase" style="font-size:0.8rem;letter-spacing:1px;color:var(--text-muted);">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text border-end-0" style="color: #a855f7;"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0" id="username" name="username" placeholder="Choose a username" required>
+                    </div>
+                </div>
+                <div class="mb-5">
+                    <label for="password" class="form-label text-uppercase" style="font-size:0.8rem;letter-spacing:1px;color:var(--text-muted);">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text border-end-0" style="color: #a855f7;"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" class="form-control border-start-0 border-end-0 ps-0" id="password" name="password" placeholder="Create a password" required>
+                        <span class="input-group-text bg-transparent border-start-0" style="cursor:pointer;" onclick="togglePassword('password', 'eyeIconSignup')">
+                            <i class="fa-regular fa-eye" id="eyeIconSignup" style="color:var(--primary-color);font-size:1rem;"></i>
+                        </span>
+                    </div>
+                </div>
+                <div style="--primary-gradient: var(--secondary-gradient); --accent-glow: 0 0 20px rgba(168, 85, 247, 0.4);">
+                    <button type="submit" class="btn btn-gradient w-100 py-3 fs-5 mb-3">Sign Up</button>
+                </div>
+            </form>
+
+            <div class="auth-divider">OR</div>
+
+            <a href="{{ url_for('google_login') }}" class="btn-google w-100 mb-4">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Sign up with Google
+            </a>
+            
+            <div class="text-center border-top pt-4 mt-2">
+                <p class="small mb-0" style="color:var(--text-muted);">Already have an account? <a href="{{ url_for('login') }}" class="fw-bold ms-1" style="color:var(--primary-color);text-decoration:none;letter-spacing:0.5px;">Sign in</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+</script>
+{% endblock %}

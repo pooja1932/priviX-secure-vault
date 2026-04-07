@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-8 col-lg-5 animate-enter delay-1">
+        <div class="glass-card p-5">
+            <div class="text-center mb-5 relative">
+                <div class="d-inline-flex justify-content-center align-items-center rounded-circle border p-4 mb-4" style="background: var(--input-bg); border-color: var(--card-border) !important; box-shadow: 0 0 30px var(--icon-bg-primary);">
+                    <i class="fa-solid fa-shield-halved" style="font-size: 2.5rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                </div>
+                <h2 class="fw-bold mb-2" style="font-size:2.2rem;letter-spacing:-1px;color:var(--text-main);">Welcome Back</h2>
+                <p style="color:var(--text-muted);margin-bottom:0;">Sign in to access your secure files.</p>
+            </div>
+            
+            <form action="{{ url_for('login') }}" method="POST">
+                <div class="mb-4">
+                    <label for="username" class="form-label text-uppercase" style="font-size:0.8rem;letter-spacing:1px;color:var(--text-muted);">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text border-end-0"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0" id="username" name="username" placeholder="Enter your username" required autofocus>
+                    </div>
+                </div>
+                <div class="mb-5">
+                    <label for="password" class="form-label text-uppercase" style="font-size:0.8rem;letter-spacing:1px;color:var(--text-muted);">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text border-end-0"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" class="form-control border-start-0 border-end-0 ps-0" id="password" name="password" placeholder="••••••••" required>
+                        <span class="input-group-text bg-transparent border-start-0" style="cursor:pointer;" onclick="togglePassword('password', 'eyeIconLogin')">
+                            <i class="fa-regular fa-eye" id="eyeIconLogin" style="color:var(--primary-color);font-size:1rem;"></i>
+                        </span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-gradient w-100 py-3 fs-5 mb-3">Sign In</button>
+            </form>
+
+            <div class="auth-divider">OR</div>
+
+            <a href="{{ url_for('google_login') }}" class="btn-google w-100 mb-4">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Sign in with Google
+            </a>
+            
+            <div class="text-center border-top pt-4 mt-2">
+                <p class="small mb-0" style="color:var(--text-muted);">Don't have an account? <a href="{{ url_for('signup') }}" class="fw-bold ms-1" style="color:var(--primary-color);text-decoration:none;letter-spacing:0.5px;">Create one</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+</script>
+{% endblock %}

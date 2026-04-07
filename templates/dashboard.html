@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+/* Dashboard Specific Styles */
+.hero-banner {
+    background: linear-gradient(135deg, rgba(0,245,255,0.08) 0%, rgba(139,92,246,0.08) 100%);
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 24px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+.hero-banner::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(0,245,255,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.hero-banner::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.username-highlight {
+    background: linear-gradient(135deg, #00f5ff, #8b5cf6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Stat Cards */
+.stat-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 20px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 100%;
+    text-decoration: none;
+    display: block;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    border-radius: 4px 0 0 4px;
+    transition: all 0.3s ease;
+}
+.stat-card.files::before { background: linear-gradient(to bottom, #00f5ff, #0284c7); box-shadow: 0 0 15px rgba(0,245,255,0.5); }
+.stat-card.shared::before { background: linear-gradient(to bottom, #10b981, #065f46); box-shadow: 0 0 15px rgba(16,185,129,0.5); }
+
+.stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3), 0 0 20px rgba(0,245,255,0.1);
+    background: rgba(255,255,255,0.05);
+}
+
+.stat-icon-badge {
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+.stat-icon-badge.teal {
+    background: rgba(0,245,255,0.1);
+    box-shadow: 0 0 20px rgba(0,245,255,0.2), inset 0 0 20px rgba(0,245,255,0.05);
+    color: #00f5ff;
+}
+.stat-icon-badge.green {
+    background: rgba(16,185,129,0.1);
+    box-shadow: 0 0 20px rgba(16,185,129,0.2), inset 0 0 20px rgba(16,185,129,0.05);
+    color: #10b981;
+}
+
+.stat-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+.stat-number.teal { color: #00f5ff; text-shadow: 0 0 20px rgba(0,245,255,0.4); }
+.stat-number.green { color: #10b981; text-shadow: 0 0 20px rgba(16,185,129,0.4); }
+
+.stat-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.25rem;
+}
+.stat-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.stat-progress-bar {
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(128,128,128,0.12);
+    margin-top: 1.5rem;
+    overflow: hidden;
+}
+.stat-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+}
+.stat-progress-fill.teal { background: linear-gradient(90deg, #00f5ff, #0284c7); box-shadow: 0 0 10px rgba(0,245,255,0.4); }
+.stat-progress-fill.green { background: linear-gradient(90deg, #10b981, #065f46); box-shadow: 0 0 10px rgba(16,185,129,0.4); }
+
+/* Activity Feed */
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid rgba(0,245,255,0.07);
+    transition: background 0.2s;
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+.activity-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+}
+
+/* Donut Chart */
+.donut-wrapper {
+    position: relative;
+    width: 120px; height: 120px;
+    margin: 0 auto 1.5rem;
+}
+.donut-wrapper svg { transform: rotate(-90deg); }
+.donut-ring { fill: none; stroke: rgba(128,128,128,0.1); stroke-width: 12; }
+.donut-fill { fill: none; stroke-width: 12; stroke-linecap: round;
+    stroke-dasharray: 314; stroke-dashoffset: 200;
+    stroke: url(#donutGrad);
+    filter: drop-shadow(0 0 6px rgba(0,245,255,0.5));
+    transition: stroke-dashoffset 1.5s ease;
+}
+.donut-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+</style>
+
+<!-- HERO BANNER -->
+<div class="hero-banner stagger-enter">
+    <div class="row align-items-center" style="position:relative;z-index:1;">
+        <div class="col-md-8 mb-4 mb-md-0">
+            <p class="mb-1 small" style="color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;font-weight:600;">
+                <i class="fa-solid fa-circle" style="color:#10b981;font-size:0.5rem;vertical-align:middle;"></i>
+                &nbsp;Secure Vault Active
+            </p>
+            <h1 class="fw-bold mb-2" style="color:var(--text-main);font-size:2.8rem;letter-spacing:-1px;line-height:1.1;">
+                Welcome back, <span class="username-highlight">{{ username }}</span>
+            </h1>
+            <p style="color:var(--text-muted);font-size:1rem;margin-bottom:0;">
+                <i class="fa-solid fa-shield-halved me-2" style="color:var(--primary-color);"></i>
+                All your files are encrypted and protected.
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <button class="btn btn-gradient btn-lg py-3 px-4" data-bs-toggle="modal" data-bs-target="#uploadModal" style="border-radius:16px;">
+                <i class="fa-solid fa-cloud-arrow-up me-2"></i>Upload File
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- STAT CARDS ROW -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-6 stagger-enter delay-1">
+        <a href="{{ url_for('my_files') }}" class="stat-card files">
+            <div class="stat-icon-badge teal">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <div class="stat-number teal">{{ upload_count }}</div>
+            <div class="stat-label">My Uploaded Files</div>
+            <div class="stat-sub">Encrypted &amp; stored securely in your vault</div>
+            <div class="stat-progress-bar">
+                <div class="stat-progress-fill teal" style="width: {{ [upload_count * 10, 100]|min }}%;"></div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 stagger-enter delay-2">
+        <a href="{{ url_for('shared_files') }}" class="stat-card shared">
+            <div class="stat-icon-badge green">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="stat-number green">{{ share_count }}</div>
+            <div class="stat-label">Files Shared With Me</div>
+            <div class="stat-sub">Accessible files shared by other users</div>
+            <div class="stat-progress-bar">
+                <div class="stat-progress-fill green" style="width: {{ [share_count * 10, 100]|min }}%;"></div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- BOTTOM ROW: Activity Feed + Storage Widget -->
+<div class="row g-4">
+    <!-- Recent Activity Feed -->
+    <div class="col-12 col-lg-8 stagger-enter delay-3">
+        <div class="stat-card" style="text-decoration:none;">
+            <h5 class="fw-bold mb-3" style="color:var(--text-main);font-family:'Space Grotesk',sans-serif;">
+                <i class="fa-solid fa-bolt me-2" style="color:var(--primary-color);"></i>Recent Activity
+            </h5>
+
+            {% if recent_logs %}
+                {% for log in recent_logs %}
+                <div class="activity-item">
+                    <div class="activity-icon" style="background:rgba(0,245,255,0.1);">
+                        <i class="fa-solid fa-clock-rotate-left" style="color:#00f5ff;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div style="font-weight:600;font-size:0.9rem;color:var(--text-main);">Action: {{ log.action.split(':')[0] | title }}</div>
+                        <div style="font-size:0.78rem;color:var(--text-muted);">{{ log.timestamp | format_ist_date }}</div>
+                    </div>
+                    {% set badge_text = log.action.split(':')[0] %}
+                    <span class="activity-badge" style="background:rgba(0,245,255,0.1);color:#00f5ff;border:1px solid rgba(0,245,255,0.2);">{{ badge_text | title }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4 text-muted"> <small>No recent activity</small> </div>
+            {% endif %}
+
+            <div class="text-center mt-3">
+                <small style="color:var(--text-muted);font-size:0.78rem;">
+                    <i class="fa-solid fa-lock me-1" style="color:var(--primary-color);"></i>
+                    All activity is logged and secured with AES encryption
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Storage Widget -->
+    <div class="col-12 col-lg-4 stagger-enter delay-4">
+        <div class="stat-card" style="text-decoration:none;text-align:center;">
+            <h5 class="fw-bold mb-4" style="color:var(--text-main);font-family:'Space Grotesk',sans-serif;">
+                <i class="fa-solid fa-database me-2" style="color:#8b5cf6;"></i>Storage
+            </h5>
+            <div class="donut-wrapper">
+                <svg viewBox="0 0 120 120" width="120" height="120">
+                    <defs>
+                        <linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:var(--primary-color);stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="donut-ring" cx="60" cy="60" r="50"/>
+                    <circle class="donut-fill" cx="60" cy="60" r="50" id="storageFill"/>
+                </svg>
+                <div class="donut-center">
+                    <div style="font-family:'Space Grotesk',sans-serif;font-size:1.3rem;font-weight:700;color:var(--text-main);" id="storagePercent">0%</div>
+                    <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Used</div>
+                </div>
+            </div>
+            <div style="font-size:2rem;font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--text-main);" id="fileCountNum">{{ upload_count }}</div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.5rem;">files in vault</div>
+            {% set usage_color = '#ef4444' if used_pct >= 90 else ('#f59e0b' if used_pct >= 70 else 'var(--primary-color)') %}
+            <div style="font-size:0.8rem;font-weight:600;margin-bottom:1rem;">
+                <span style="color:{{ usage_color }};">{{ used_mb }} MB</span>
+                <span style="color:var(--text-muted);"> / {{ (total_mb / 1024) | int }} GB used</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">
+                <i class="fa-solid fa-circle-check me-1" style="color:#10b981;"></i>
+                AES-256 Encryption Active
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background: rgba(10,20,40,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(0,245,255,0.15); border-radius: 24px;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h4 class="modal-title fw-bold text-center w-100" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">
+            <i class="fa-solid fa-cloud-arrow-up me-2" style="color:#00f5ff;"></i>Upload File
+        </h4>
+        <button type="button" class="btn-close position-absolute" style="right: 20px; top: 20px; filter: invert(1);" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+          <div class="upload-zone text-center p-5 mb-3" id="uploadZone" style="border: 2px dashed rgba(0,245,255,0.3); border-radius: 16px; background: rgba(0,245,255,0.03); cursor: pointer; transition: all 0.3s ease;">
+            <i class="fa-solid fa-cloud-arrow-up mb-3" style="font-size: 3.5rem; color: #00f5ff; filter:drop-shadow(0 0 10px rgba(0,245,255,0.4));"></i>
+            <h5 class="fw-bold mb-2" style="color:#f8fafc;font-family:'Space Grotesk',sans-serif;">Drag &amp; Drop</h5>
+            <p class="mb-0" style="color:#8892a4;font-size:0.9rem;">Click to browse your files</p>
+            <input type="file" style="opacity: 0; position: absolute; z-index: -1; width: 1px; height: 1px;" id="fileInput" name="file" required>
+          </div>
+          <div class="text-center mb-3">
+            <small id="selectedFileName" style="color:#00f5ff;"></small>
+          </div>
+          <button type="submit" class="btn btn-gradient w-100">
+            <i class="fa-solid fa-lock me-2"></i>Encrypt &amp; Upload
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectedFileName = document.getElementById('selectedFileName');
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            selectedFileName.textContent = "✓ " + fileInput.files[0].name;
+            uploadZone.style.borderColor = '#00f5ff';
+            uploadZone.style.background = 'rgba(0,245,255,0.07)';
+        }
+    });
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#00f5ff';
+        uploadZone.style.background = 'rgba(0,245,255,0.07)';
+        uploadZone.style.boxShadow = '0 0 20px rgba(0,245,255,0.2)';
+    });
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.style.borderColor = 'rgba(0,245,255,0.3)';
+        uploadZone.style.background = 'rgba(0,245,255,0.03)';
+        uploadZone.style.boxShadow = 'none';
+    });
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const dt = e.dataTransfer;
+        if (dt.files.length > 0) {
+            fileInput.files = dt.files;
+            selectedFileName.textContent = "✓ " + dt.files[0].name;
+        }
+    });
+
+    // Animate donut chart on load — using REAL storage data from server
+    window.addEventListener('load', () => {
+        const usedPct = {{ used_pct }};  // e.g. 12.4
+        const pct = usedPct / 100;
+        const circumference = 2 * Math.PI * 50;
+        const offset = circumference * (1 - pct);
+        const fill = document.getElementById('storageFill');
+        const label = document.getElementById('storagePercent');
+        if (fill) {
+            fill.style.strokeDasharray = circumference;
+            fill.style.strokeDashoffset = offset;
+            // Change colour to red when near capacity
+            if (usedPct >= 90) {
+                fill.style.stroke = '#ef4444';
+                fill.style.filter = 'drop-shadow(0 0 6px rgba(239,68,68,0.5))';
+            } else if (usedPct >= 70) {
+                fill.style.stroke = '#f59e0b';
+                fill.style.filter = 'drop-shadow(0 0 6px rgba(245,158,11,0.5))';
+            }
+            setTimeout(() => { label.textContent = usedPct + '%'; }, 500);
+        }
+    });
+</script>
+{% endblock %}
